@@ -1,0 +1,17 @@
+torch>=2.5.0
+transformers>=4.51.0
+numpy>=2.1.0
+python-docx>=0.8.11
+Cython>=3.0.0
+sentencepiece>=0.1.99
+protobuf>=5.0.0,<7.0.0
+flask>=3.0.0
+werkzeug>=3.0.0
+flask-session>=0.5.0
+supabase>=2.0.0
+requests>=2.31.0
+google-genai>=1.51.0
+google-cloud-translate>=3.15.0
+google-api-core>=2.11.0
+python-dotenv>=1.0.0
+
