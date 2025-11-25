@@ -1,0 +1,50 @@
+﻿# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Google Cloud Service Account JSON files (ADC - Application Default Credentials)
+concise-memory-477512-u4-d4e9392c74c4 (1).json
+concise-memory-*.json
+*-service-account.json
+service-account*.json
+*service-account*.json
+credentials.json
+key.json
+*.json
+!package.json
+!tsconfig.json
+!*.example.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads and temp files
+uploads/
+temp/
+*.docx
+!templates/
+
+
+# Logs
+*.log
