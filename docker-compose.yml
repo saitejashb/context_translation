@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  context-translation:
+    build: .
+    container_name: context-translation-app
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount .env file from host (read-only, DO NOT commit this file to git)
+      - ./.env:/app/.env:ro
+      # Mount Google service account JSON file from host (read-only)
+      # Update the path below to match your actual JSON filename
+      - ./concise-memory-477512-u4-d4e9392c74c4 (1).json:/app/service-account.json:ro
+      # Optional: Mount uploads directory to persist files between container restarts
+      - ./uploads:/app/uploads
+    environment:
+      # Override service account file path if needed
+      - GOOGLE_SERVICE_ACCOUNT_FILE=/app/service-account.json
+      # Flask configuration
+      - FLASK_ENV=production
+    restart: unless-stopped
+    # Security: run as non-root user
+    user: "1000:1000"
+

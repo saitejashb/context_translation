@@ -1,0 +1,42 @@
+# Sensitive files - NEVER include these in Docker image
+.env
+*.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.docx
+*.pdf
+*.md
+
+# Temporary files
+*.tmp
+*.log

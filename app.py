@@ -955,5 +955,7 @@ if __name__ == '__main__':
     print("Access the web interface at: http://localhost:5000")
     print("=" * 60)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Get debug mode from environment (default to False for production)
+    debug_mode = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+    app.run(debug=debug_mode, host='0.0.0.0', port=5000)
 
