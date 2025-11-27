@@ -1,1024 +1,1601 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DocuTranslate Pro - Enterprise DOCX Translation</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        
-        /* Custom Scrollbar for specific panels */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DocuTranslate Pro - Enterprise DOCX Translation</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Inter', sans-serif; }
 
-        /* Range Slider Styling Overrides for Tailwind */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #4f46e5; /* Indigo-600 */
-            cursor: pointer;
-            margin-top: -8px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-            border: 2px solid white;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #e2e8f0;
-            border-radius: 2px;
-        }
-        
-        /* Animation Classes */
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-spin-custom { animation: spin 1s linear infinite; }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        
-        /* Highlight styles for comments */
-        .highlighted-text {
-            background-color: #fef08a; /* yellow-200 */
-            cursor: pointer;
-            position: relative;
-        }
-        .highlighted-text:hover {
-            background-color: #fde047; /* yellow-300 */
-        }
-        .comment-marker {
-            position: absolute;
-            top: -8px;
-            right: -8px;
-            background: #ef4444;
-            color: white;
-            border-radius: 50%;
-            width: 16px;
-            height: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-    </style>
+/* Custom Scrollbar for specific panels */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Dark scrollbar for history sidebar */
+#historySidebar .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+#historySidebar .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+#historySidebar .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* Range Slider Styling Overrides for Tailwind */
+input[type=range] {
+-webkit-appearance: none;
+background: transparent;
+}
+input[type=range]::-webkit-slider-thumb {
+-webkit-appearance: none;
+height: 20px;
+width: 20px;
+border-radius: 50%;
+background: #4f46e5; /* Indigo-600 */
+cursor: pointer;
+margin-top: -8px;
+box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+border: 2px solid white;
+}
+input[type=range]::-webkit-slider-runnable-track {
+width: 100%;
+height: 4px;
+cursor: pointer;
+background: #e2e8f0;
+border-radius: 2px;
+}
+
+/* Animation Classes */
+@keyframes spin { to { transform: rotate(360deg); } }
+.animate-spin-custom { animation: spin 1s linear infinite; }
+.fade-in { animation: fadeIn 0.3s ease-in; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Highlight styles for comments */
+.highlighted-text {
+background-color: #fef08a; /* yellow-200 */
+cursor: pointer;
+position: relative;
+}
+.highlighted-text:hover {
+background-color: #fde047; /* yellow-300 */
+}
+.comment-marker {
+position: absolute;
+top: -8px;
+right: -8px;
+background: #ef4444;
+color: white;
+border-radius: 50%;
+width: 16px;
+height: 16px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-size: 10px;
+font-weight: bold;
+cursor: pointer;
+}
+</style>
 </head>
 <body class="bg-slate-50 text-slate-800 h-screen flex flex-col overflow-hidden">
 
-    <div id="error" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] bg-red-50 border border-red-200 text-red-700 px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span></span>
-    </div>
-    <div id="success" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-        <span></span>
-    </div>
+<div id="error" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] bg-red-50 border border-red-200 text-red-700 px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+<span></span>
+</div>
+<div id="success" class="hidden fixed top-5 left-1/2 transform -translate-x-1/2 z-[100] bg-green-50 border border-green-200 text-green-700 px-6 py-3 rounded-lg shadow-lg font-medium flex items-center gap-2">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+<span></span>
+</div>
 
-    <div id="loginSection" class="fixed inset-0 z-50 bg-slate-50 flex items-center justify-center">
-        <div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-4 text-2xl">🔐</div>
-                <h2 class="text-2xl font-bold text-slate-900">Sign In</h2>
-                <p class="text-slate-500 mt-2">Access the Enterprise Translation Portal</p>
-            </div>
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
-                    <input type="text" id="username" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Enter your ID">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
-                    <input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="••••••••">
-                </div>
-                <button id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md hover:shadow-lg mt-2">Access Dashboard</button>
-            </div>
-            <div id="loginError" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded border border-red-100 text-center"></div>
-        </div>
-    </div>
+<div id="loginSection" class="fixed inset-0 z-50 bg-slate-50 flex items-center justify-center">
+<div class="bg-white p-8 rounded-2xl shadow-xl border border-slate-200 w-full max-w-md">
+<div class="text-center mb-8">
+<div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 mb-4 text-2xl">🔐</div>
+<h2 class="text-2xl font-bold text-slate-900">Sign In</h2>
+<p class="text-slate-500 mt-2">Access the Enterprise Translation Portal</p>
+</div>
+<div class="space-y-4">
+<div>
+<label class="block text-sm font-medium text-slate-700 mb-1">Username</label>
+<input type="text" id="username" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="Enter your ID">
+</div>
+<div>
+<label class="block text-sm font-medium text-slate-700 mb-1">Password</label>
+<input type="password" id="password" class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition" placeholder="••••••••">
+</div>
+<button id="loginBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2.5 rounded-lg transition shadow-md hover:shadow-lg mt-2">Access Dashboard</button>
+</div>
+<div id="loginError" class="hidden mt-4 p-3 bg-red-50 text-red-600 text-sm rounded border border-red-100 text-center"></div>
+</div>
+</div>
 
-    <header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0 z-20">
-        <div class="flex items-center gap-3">
-            <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">T</div>
-            <h1 class="text-lg font-bold text-slate-800 tracking-tight">Docu<span class="text-indigo-600">Translate</span> <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100 font-medium ml-1">PRO</span></h1>
-        </div>
-        
-        <div class="flex items-center gap-4">
-            <div class="flex items-center gap-3 pl-4 border-l border-slate-200">
-                <button id="logoutBtn" class="text-sm font-medium text-slate-600 hover:text-red-600 transition">Logout</button>
-            </div>
-        </div>
-    </header>
+<header class="bg-white border-b border-slate-200 h-16 flex items-center justify-between px-6 shrink-0 z-20">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">T</div>
+<h1 class="text-lg font-bold text-slate-800 tracking-tight">TechBharat<span class="text-indigo-600"></span> <span class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full border border-indigo-100 font-medium ml-1">Ai</span></h1>
+</div>
 
-    <div id="mainContent" class="flex-1 flex overflow-hidden relative" style="display: none;">
-        
-        <div id="uploadViewContainer" class="absolute inset-0 z-10 bg-slate-50 flex flex-col items-center justify-center p-6 transition-all duration-500">
-            
-            <div class="w-full max-w-2xl text-center space-y-6">
-                <h2 class="text-3xl font-bold text-slate-900">Upload Document for Translation</h2>
-                <p class="text-slate-500 text-lg">English to Telugu DOCX Translator with Multi-Engine Comparison</p>
-                
-                <div class="upload-section w-full">
-                    <div class="upload-area group border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-white hover:bg-indigo-50 rounded-2xl p-12 cursor-pointer transition-all duration-300" id="uploadArea">
-                        <div class="flex flex-col items-center">
-                            <div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                            </div>
-                            <p class="text-xl font-medium text-slate-700 mb-2">Click to upload or drag & drop</p>
-                            <p class="text-slate-400">DOCX files only (Max 50MB)</p>
-                            <input type="file" id="fileInput" accept=".docx" class="hidden" />
-                        </div>
-                    </div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-3 pl-4 border-l border-slate-200">
+<button id="historyBtn" class="text-sm font-medium text-slate-600 hover:text-indigo-600 transition flex items-center gap-2">
+<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+History
+</button>
+<button id="translateAnotherBtn" class="text-sm font-medium text-indigo-600 hover:text-indigo-700 transition hidden">Translate Another File</button>
+<button id="logoutBtn" class="text-sm font-medium text-slate-600 hover:text-red-600 transition">Logout</button>
+</div>
+</div>
+</header>
 
-                    <div id="fileTypeFeedback" class="hidden mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-left max-w-lg mx-auto">
-                        <div class="flex items-center justify-between">
-                            <h4 class="text-amber-800 font-medium text-sm flex items-center gap-2">Confirm File Type</h4>
-                        </div>
-                        <div class="mt-2 flex gap-2">
-                            <select id="fileType" class="flex-1 text-sm border-amber-200 rounded-md focus:ring-amber-500 focus:border-amber-500 p-2">
-                                <option value="">Select type...</option>
-                                <option value="DOCX">DOCX</option>
-                                <option value="TXT">TXT</option>
-                            </select>
-                            <button id="submitFileTypeBtn" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1 rounded-md text-sm font-medium transition">Confirm</button>
-                        </div>
-                        <div id="fileTypeSuccess" class="text-xs text-green-600 mt-2 font-medium hidden"></div>
-                    </div>
+<div id="mainContent" class="flex-1 flex overflow-hidden relative" style="display: none;">
 
-                    <div id="loading" class="mt-8 hidden">
-                        <div class="spinner border-4 border-slate-200 border-t-indigo-600 rounded-full w-10 h-10 animate-spin-custom mx-auto mb-3"></div>
-                        <div class="text-indigo-600 font-medium">Processing Document...</div>
-                    </div>
+<!-- History Sidebar (ChatGPT style) -->
+<div id="historySidebar" class="hidden w-64 bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 z-30">
+<div class="p-4 border-b border-slate-800 flex items-center justify-between">
+<h2 class="text-white font-semibold text-sm">Translation History</h2>
+<button id="closeHistorySidebarBtn" class="text-slate-400 hover:text-white transition">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+</button>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<div id="historyLoading" class="text-center py-8">
+<div class="spinner border-4 border-slate-700 border-t-indigo-500 rounded-full w-8 h-8 animate-spin-custom mx-auto mb-3"></div>
+<div class="text-slate-400 text-xs">Loading...</div>
+</div>
+<div id="historyList" class="hidden">
+<!-- History items will be inserted here -->
+</div>
+</div>
+</div>
 
-                    <button id="translateBtn" class="w-full max-w-md mx-auto mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-lg font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition hidden">
-                        Generate All Translations
-                    </button>
-                </div>
-            </div>
-        </div>
+<div id="uploadViewContainer" class="absolute inset-0 z-10 bg-slate-50 flex flex-col items-center justify-center p-6 transition-all duration-500">
 
-        <div id="previewSection" class="w-full h-full flex hidden opacity-0 transition-opacity duration-500">
-            <div class="original-panel-container w-5/12 bg-white border-r border-slate-200 flex flex-col h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
-                <div class="p-4 border-b border-slate-100 bg-slate-50/50 backdrop-blur sticky top-0 flex justify-between items-center">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Source</span>
-                        <h3 class="font-semibold text-slate-800">Original Document</h3>
-                    </div>
-                </div>
-                <div id="originalText" class="flex-1 overflow-y-auto p-8 font-serif text-slate-800 leading-relaxed text-base custom-scrollbar selection:bg-yellow-200 selection:text-slate-900 whitespace-pre-wrap" data-doc-type="original"></div>
-            </div>
+<div class="w-full max-w-2xl text-center space-y-6">
+<h2 class="text-3xl font-bold text-slate-900">Upload Document for Translation</h2>
+<p class="text-slate-500 text-lg">English to Telugu DOCX Translator with Multi-Engine Comparison</p>
 
-            <div class="translations-container w-7/12 bg-slate-50/50 flex flex-col h-full overflow-hidden">
-                <div class="p-4 border-b border-slate-200 bg-white sticky top-0 flex justify-between items-center z-10">
-                    <div class="flex items-center gap-2">
-                        <span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Results</span>
-                        <h3 class="font-semibold text-slate-800">Translated Versions</h3>
-                    </div>
-                </div>
-                <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
-                    <div id="translationsAccordion" class="space-y-6 max-w-5xl mx-auto pb-20">
-                        </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="upload-section w-full">
+<div class="upload-area group border-2 border-dashed border-indigo-200 hover:border-indigo-500 bg-white hover:bg-indigo-50 rounded-2xl p-12 cursor-pointer transition-all duration-300" id="uploadArea">
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+</div>
+<p class="text-xl font-medium text-slate-700 mb-2">Click to upload or drag & drop</p>
+<p class="text-slate-400">DOCX files only (Max 50MB)</p>
+<input type="file" id="fileInput" accept=".docx" class="hidden" />
+</div>
+</div>
 
-    <div id="toolsSection" class="hidden"><div id="editTool"></div></div>
-    <div id="commentsPanel" class="hidden"><div id="commentsList"></div></div>
+<div id="fileTypeFeedback" class="hidden mt-6 bg-amber-50 border border-amber-200 rounded-xl p-4 text-left max-w-lg mx-auto">
+<div class="flex items-center justify-between">
+<h4 class="text-amber-800 font-medium text-sm flex items-center gap-2">Confirm File Type</h4>
+</div>
+<div class="mt-2 flex gap-2">
+<select id="fileType" class="flex-1 text-sm border-amber-200 rounded-md focus:ring-amber-500 focus:border-amber-500 p-2">
+<option value="">Select type...</option>
+<option value="DOCX">DOCX</option>
+<option value="TXT">TXT</option>
+</select>
+<button id="submitFileTypeBtn" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1 rounded-md text-sm font-medium transition">Confirm</button>
+</div>
+<div id="fileTypeSuccess" class="text-xs text-green-600 mt-2 font-medium hidden"></div>
+</div>
 
-    <div id="thumbsPopup" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-indigo-100 p-6 z-[60] w-[400px]">
-        <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-            📝 Feedback on Selected Text
-        </h3>
-        <div id="thumbsPreview" class="bg-amber-50 text-amber-800 text-sm p-3 rounded-lg mb-4 border border-amber-100 italic"></div>
-        <p class="text-sm text-slate-600 mb-4">How would you rate this translation?</p>
-        <div class="flex gap-4 justify-center mb-4">
-            <button id="thumbsUpBtn" class="flex items-center gap-2 px-6 py-3 bg-green-50 hover:bg-green-100 border-2 border-green-300 rounded-lg text-green-700 font-semibold transition hover:scale-105">
-                👍 Good
-            </button>
-            <button id="thumbsDownBtn" class="flex items-center gap-2 px-6 py-3 bg-red-50 hover:bg-red-100 border-2 border-red-300 rounded-lg text-red-700 font-semibold transition hover:scale-105">
-                👎 Needs Improvement
-            </button>
-        </div>
-        <div class="flex gap-3 justify-end mt-4">
-            <button id="cancelThumbsBtn" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition">Cancel</button>
-        </div>
-    </div>
+<div id="loading" class="mt-8 hidden">
+<div class="spinner border-4 border-slate-200 border-t-indigo-600 rounded-full w-10 h-10 animate-spin-custom mx-auto mb-3"></div>
+<div class="text-indigo-600 font-medium">Processing Document...</div>
+</div>
 
-    <div id="commentPopup" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-indigo-100 p-6 z-[60] w-[450px]">
-        <h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
-            💬 Add Comment
-        </h3>
-        <div id="commentPreview" class="bg-amber-50 text-amber-800 text-sm p-3 rounded-lg mb-4 border border-amber-100 italic"></div>
-        <textarea id="commentText" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-32 text-sm" placeholder="Enter your comment..."></textarea>
-        <div class="flex gap-3 justify-end mt-4">
-            <button id="cancelCommentBtn" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition">Cancel</button>
-            <button id="saveCommentBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm transition">Save Comment</button>
-        </div>
-    </div>
+<button id="translateBtn" class="w-full max-w-md mx-auto mt-6 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white text-lg font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition hidden">
+Generate All Translations
+</button>
+</div>
+</div>
+</div>
 
-    <script>
-        // --- 1. UI Helper Logic ---
-        function showDashboard() {
-            document.getElementById('uploadViewContainer').classList.add('hidden');
-            const previewSection = document.getElementById('previewSection');
-            previewSection.classList.remove('hidden');
-            setTimeout(() => { previewSection.classList.remove('opacity-0'); }, 50);
-        }
+<div id="previewSection" class="w-full h-full flex hidden opacity-0 transition-opacity duration-500">
+<div class="original-panel-container w-5/12 bg-white border-r border-slate-200 flex flex-col h-full shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
+<div class="p-4 border-b border-slate-100 bg-slate-50/50 backdrop-blur sticky top-0 flex justify-between items-center">
+<div class="flex items-center gap-2">
+<span class="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Source</span>
+<h3 class="font-semibold text-slate-800">Original Document</h3>
+</div>
+</div>
+<div id="originalText" class="flex-1 overflow-y-auto p-8 font-serif text-slate-800 leading-relaxed text-base custom-scrollbar selection:bg-yellow-200 selection:text-slate-900 whitespace-pre-wrap" data-doc-type="original"></div>
+</div>
 
-        function showError(message) {
-            const el = document.getElementById('error');
-            el.querySelector('span').textContent = message;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 5000);
-        }
+<div class="translations-container w-7/12 bg-slate-50/50 flex flex-col h-full overflow-hidden">
+<div class="p-4 border-b border-slate-200 bg-white sticky top-0 flex justify-between items-center z-10">
+<div class="flex items-center gap-2">
+<span class="bg-indigo-100 text-indigo-700 text-xs font-bold px-2 py-1 rounded uppercase tracking-wider">Results</span>
+<h3 class="font-semibold text-slate-800">Translated Versions</h3>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+<div id="translationsAccordion" class="space-y-6 max-w-5xl mx-auto pb-20">
+</div>
+</div>
+</div>
+</div>
+</div>
 
-        function hideError() {
-            document.getElementById('error').classList.add('hidden');
-        }
+<div id="toolsSection" class="hidden"><div id="editTool"></div></div>
+<div id="commentsPanel" class="hidden"><div id="commentsList"></div></div>
 
-        function showSuccess(message) {
-            const el = document.getElementById('success');
-            el.querySelector('span').textContent = message;
-            el.classList.remove('hidden');
-            setTimeout(() => el.classList.add('hidden'), 3000);
-        }
-        
-        function hideSuccess() {
-            document.getElementById('success').classList.add('hidden');
-        }
 
-        // --- 2. Core Logic (Restored) ---
-        
-        const uploadArea = document.getElementById('uploadArea');
-        const fileInput = document.getElementById('fileInput');
-        const translateBtn = document.getElementById('translateBtn');
-        const loading = document.getElementById('loading');
-        
-        let currentOriginalText = '';
-        let currentTranslationId = '';
-        let currentUserId = null;
-        let currentUsername = null;
-        let currentFileType = 'docx';
+<div id="thumbsPopup" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-indigo-100 p-6 z-[60] w-[400px]">
+<h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+📝 Feedback on Selected Text
+</h3>
+<div id="thumbsPreview" class="bg-amber-50 text-amber-800 text-sm p-3 rounded-lg mb-4 border border-amber-100 italic"></div>
+<p class="text-sm text-slate-600 mb-4">How would you rate this translation?</p>
+<div class="flex gap-4 justify-center mb-4">
+<button id="thumbsUpBtn" class="flex items-center gap-2 px-6 py-3 bg-green-50 hover:bg-green-100 border-2 border-green-300 rounded-lg text-green-700 font-semibold transition hover:scale-105">
+👍 Good
+</button>
+<button id="thumbsDownBtn" class="flex items-center gap-2 px-6 py-3 bg-red-50 hover:bg-red-100 border-2 border-red-300 rounded-lg text-red-700 font-semibold transition hover:scale-105">
+👎 Needs Improvement
+</button>
+</div>
+<div class="flex gap-3 justify-end mt-4">
+<button id="cancelThumbsBtn" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition">Cancel</button>
+</div>
+</div>
 
-        // Login
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            
-            if (!username || !password) {
-                const err = document.getElementById('loginError');
-                err.textContent = 'Please enter username and password';
-                err.classList.remove('hidden');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({username, password})
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    currentUserId = data.user_id;
-                    currentUsername = data.username;
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('mainContent').style.display = 'flex';
-                    document.getElementById('loginError').classList.add('hidden');
-                    loadAvailableEngines();
-                } else {
-                    const err = document.getElementById('loginError');
-                    err.textContent = data.error || 'Login failed';
-                    err.classList.remove('hidden');
-                }
-            } catch (err) {
-                const errEl = document.getElementById('loginError');
-                errEl.textContent = 'Login error: ' + err.message;
-                errEl.classList.remove('hidden');
-            }
-        });
+<div id="commentPopup" class="hidden fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl border border-indigo-100 p-6 z-[60] w-[450px]">
+<h3 class="text-lg font-bold text-slate-800 mb-3 flex items-center gap-2">
+💬 Add Comment
+</h3>
+<div id="commentPreview" class="bg-amber-50 text-amber-800 text-sm p-3 rounded-lg mb-4 border border-amber-100 italic"></div>
+<textarea id="commentText" class="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none h-32 text-sm" placeholder="Enter your comment..."></textarea>
+<div class="flex gap-3 justify-end mt-4">
+<button id="cancelCommentBtn" class="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-lg text-sm font-medium transition">Cancel</button>
+<button id="saveCommentBtn" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium shadow-sm transition">Save Comment</button>
+</div>
+</div>
 
-        // Logout
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            try {
-                await fetch('/logout', {method: 'POST'});
-                currentUserId = null;
-                currentUsername = null;
-                document.getElementById('loginSection').classList.remove('hidden');
-                document.getElementById('mainContent').style.display = 'none';
-                document.getElementById('previewSection').classList.add('hidden');
-            } catch (err) {
-                console.error('Logout error:', err);
-            }
-        });
+<script>
+// --- 1. UI Helper Logic ---
+function showDashboard() {
+document.getElementById('uploadViewContainer').classList.add('hidden');
+const previewSection = document.getElementById('previewSection');
+previewSection.classList.remove('hidden');
+setTimeout(() => { previewSection.classList.remove('opacity-0'); }, 50);
+// Show "Translate Another File" button when in preview mode
+document.getElementById('translateAnotherBtn').classList.remove('hidden');
+}
 
-        async function loadAvailableEngines() {
-            try {
-                const response = await fetch('/engines');
-                // Logic preserved but UI specific engine select is removed in new design
-                // as we show all engines by default.
-            } catch (err) { console.error(err); }
-        }
+function resetToUploadView() {
+// Stop any polling
+if (pollIntervalId) {
+clearInterval(pollIntervalId);
+pollIntervalId = null;
+}
 
-        // Drag & Drop
-        uploadArea.addEventListener('click', () => fileInput.click());
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('border-indigo-500', 'bg-indigo-50');
-        });
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
-        });
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
-            if (e.dataTransfer.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
+// Reset translation state
+currentTranslationId = '';
+currentOriginalText = '';
+reviewStatus = {};
 
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) handleFile(e.target.files[0]);
-        });
+// Clear file input
+fileInput.value = '';
 
-        function handleFile(file) {
-            if (!file.name.endsWith('.docx')) {
-                showError('Please upload a .docx file');
-                return;
-            }
-            currentFileType = 'docx';
-            translateBtn.classList.remove('hidden');
-            hideError();
-            
-            // UI Update for selected file
-            uploadArea.innerHTML = `
-                <div class="flex flex-col items-center">
-                    <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <p class="text-xl font-bold text-slate-800">${file.name}</p>
-                    <p class="text-slate-500">Ready to translate</p>
-                </div>
-            `;
-        }
+// Reset upload area UI - restore original state
+uploadArea.innerHTML = `
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+</div>
+<p class="text-xl font-medium text-slate-700 mb-2">Click to upload or drag & drop</p>
+<p class="text-slate-400">DOCX files only (Max 50MB)</p>
+<input type="file" id="fileInput" accept=".docx" class="hidden" />
+</div>
+`;
 
-        // Translation Logic
-        translateBtn.addEventListener('click', async () => {
-            if (!fileInput.files.length) return;
+// Re-attach file input event listener and update reference (since we replaced innerHTML)
+fileInput = document.getElementById('fileInput');
+if (fileInput) {
+fileInput.addEventListener('change', (e) => {
+if (e.target.files.length > 0) handleFile(e.target.files[0]);
+});
+}
 
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            if (currentUserId) formData.append('user_id', currentUserId);
+// Hide translate button
+translateBtn.classList.add('hidden');
+translateBtn.disabled = false;
+translateBtn.textContent = 'Generate All Translations';
 
-            loading.classList.remove('hidden');
-            translateBtn.disabled = true;
-            translateBtn.textContent = 'Generating...';
-            hideError();
-            hideSuccess();
+// Hide loading
+loading.classList.add('hidden');
 
-            try {
-                const response = await fetch('/translate', {
-                    method: 'POST',
-                    body: formData
-                });
+// Hide file type feedback
+const fileTypeFeedback = document.getElementById('fileTypeFeedback');
+if (fileTypeFeedback) {
+fileTypeFeedback.classList.add('hidden');
+document.getElementById('fileType').value = '';
+document.getElementById('fileTypeSuccess').classList.add('hidden');
+}
 
-                if (!response.ok) {
-                    const errorData = await response.json().catch(() => ({ error: 'Translation failed' }));
-                    throw new Error(errorData.error || `Translation failed: ${response.status}`);
-                }
+// Clear preview section
+document.getElementById('originalText').innerHTML = '';
+document.getElementById('translationsAccordion').innerHTML = '';
 
-                const data = await response.json();
-                if (!data || !data.success) throw new Error(data.error || 'Translation failed');
+// Hide preview section and show upload view
+const previewSection = document.getElementById('previewSection');
+previewSection.classList.add('hidden');
+previewSection.classList.add('opacity-0');
 
-                currentOriginalText = data.original_text || '';
-                currentTranslationId = data.translation_id || '';
-                const engines = data.engines || ['gemini-3-pro', 'google-standard', 'google-adaptive', 'indictrans2'];
+document.getElementById('uploadViewContainer').classList.remove('hidden');
 
-                // Update UI
-                document.getElementById('originalText').innerHTML = currentOriginalText;
-                const fileTypeFeedback = document.getElementById('fileTypeFeedback');
-                if (fileTypeFeedback) fileTypeFeedback.classList.remove('hidden');
-                
-                showDashboard();
-                initializeTranslationPanels(engines);
-                pollTranslationStatus(currentTranslationId);
-                
-                showSuccess('Translation started!');
+// Hide "Translate Another File" button
+document.getElementById('translateAnotherBtn').classList.add('hidden');
 
-            } catch (err) {
-                console.error('Translation error:', err);
-                showError(err.message || 'Translation failed');
-            } finally {
-                loading.classList.add('hidden');
-                translateBtn.disabled = false;
-                translateBtn.textContent = 'Generate All Translations';
-            }
-        });
+// Clear any errors/success messages
+hideError();
+hideSuccess();
+}
 
-        // HTML Generator for Cards (Tailwind + Preserved IDs)
-        function initializeTranslationPanels(engines) {
-            const accordion = document.getElementById('translationsAccordion');
-            accordion.innerHTML = '';
-            
-            const engineNames = {
-                'indictrans2': 'IndicTrans2',
-                'gemini-3-pro': 'Gemini 3 Pro',
-                'google-standard': 'Google Cloud (Standard)',
-                'google-adaptive': 'Google Cloud (Adaptive)'
-            };
-            
-            const orderedEngines = ['gemini-3-pro', 'google-standard', 'google-adaptive', 'indictrans2'];
-            const displayOrder = orderedEngines.filter(e => engines.includes(e));
-            
-            displayOrder.forEach((engine, index) => {
-                const accordionItem = document.createElement('div');
-                accordionItem.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-md translation-accordion-item'; 
-                accordionItem.setAttribute('data-engine', engine);
-                accordionItem.id = `accordion-${engine}`;
-                
-                // Header
-                const header = document.createElement('div');
-                header.className = 'p-4 bg-slate-50 cursor-pointer flex justify-between items-center border-b border-slate-100 hover:bg-slate-100 transition-colors translation-accordion-header';
-                header.id = `header-${engine}`;
-                header.onclick = () => toggleAccordion(engine);
-                
-                const headerContent = document.createElement('div');
-                headerContent.className = 'flex items-center gap-3 w-full';
-                headerContent.innerHTML = `
-                    <div class="flex-1 flex items-center justify-between">
-                        <h4 class="font-semibold text-slate-800 m-0 flex items-center gap-2">
-                            ${engineNames[engine] || `Translation ${index + 1}`}
-                        </h4>
-                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 translation-status-badge translating" id="status-${engine}">Translating...</span>
-                    </div>
-                    <svg class="w-5 h-5 text-slate-400 transform transition-transform duration-200" id="icon-${engine}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                `;
-                header.appendChild(headerContent);
-                
-                // Content
-                const content = document.createElement('div');
-                content.className = 'hidden translation-accordion-content'; // hidden by default
-                content.id = `content-${engine}`;
-                
-                const body = document.createElement('div');
-                body.className = 'p-6 translation-accordion-body';
-                
-                // Actions (Download/Delete)
-                const actions = document.createElement('div');
-                actions.className = 'flex gap-2 mb-4 justify-end border-b border-slate-100 pb-2 translation-actions';
-                actions.innerHTML = `
-                    <button class="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow-sm transition download-translation-btn download-btn" data-engine="${engine}" style="display: none;">
-                        Download
-                    </button>
-                    <button class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold rounded shadow-sm transition delete-translation-btn delete-btn" data-engine="${engine}" style="display: none;">
-                        Delete
-                    </button>
-                `;
-                
-                // Text Content
-                const textDiv = document.createElement('div');
-                textDiv.className = 'translation-text-content prose prose-slate max-w-none text-sm leading-relaxed p-4 bg-slate-50 rounded-lg border border-slate-200 min-h-[150px] mb-6 whitespace-pre-wrap';
-                textDiv.setAttribute('data-doc-type', 'translated');
-                textDiv.setAttribute('data-engine', engine);
-                textDiv.id = `text-${engine}`;
-                textDiv.textContent = 'Translating... Please wait.';
-                
-                // Comments Section
-                const commentsSection = document.createElement('div');
-                commentsSection.className = 'mt-4 pt-4 border-t border-slate-100 translation-comments-section';
-                commentsSection.id = `comments-${engine}`;
-                commentsSection.innerHTML = `
-                    <h5 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">💬 Comments</h5>
-                    <div class="space-y-2 comments-list" id="comments-list-${engine}"></div>
-                `;
-                
-                // Feedback Grid
-                const feedbackSection = document.createElement('div');
-                feedbackSection.className = 'mt-6 bg-indigo-50/50 rounded-xl p-5 border border-indigo-100 translation-feedback-section';
-                feedbackSection.id = `feedback-${engine}`;
-                feedbackSection.innerHTML = `
-                    <div class="mb-4">
-                        <h5 class="text-indigo-900 font-bold text-sm mb-2">Translation Evaluation</h5>
-                        <p class="text-xs text-slate-600 mb-4">Please evaluate this translation based on the following criteria:</p>
-                    </div>
-                    
-                    <div class="space-y-4 mb-6">
-                        ${renderCriteria(engine, 'incomplete_translation', 'Incomplete Translation')}
-                        ${renderCriteria(engine, 'wrong_terminology', 'Wrong Terminology')}
-                        ${renderCriteria(engine, 'wrong_sentence_structure', 'Wrong Sentence Structure')}
-                        ${renderCriteria(engine, 'telugu_grammar_errors', 'Telugu Grammar Errors')}
-                        ${renderCriteria(engine, 'incorrect_layout_structure', 'Incorrect Document Layout Structure')}
-                        ${renderCriteria(engine, 'wrong_glossary_implementation', 'Wrong Glossary Implementation')}
-                    </div>
-                    
-                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p class="text-xs font-semibold text-blue-900 mb-1">Rating Scale:</p>
-                        <ul class="text-xs text-blue-800 space-y-1">
-                            <li><strong>None:</strong> No errors for the selected criteria</li>
-                            <li><strong>Few:</strong> Small number of errors for the selected criteria</li>
-                            <li><strong>Many:</strong> Numerous errors for the selected criteria</li>
-                        </ul>
-                    </div>
-                    
-                    <button class="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg text-sm hover:bg-indigo-700 transition mb-4 translation-submit-btn" onclick="submitAllRatings('${engine}')">Submit Evaluation</button>
-                    
-                    <div>
-                        <textarea class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500 outline-none translation-suggestions-textarea" id="suggestions-${engine}" placeholder="Additional suggestions or comments..."></textarea>
-                        <button class="mt-2 text-indigo-600 text-sm font-medium hover:text-indigo-800 translation-submit-btn" onclick="submitTranslationSuggestions('${engine}')">Submit Suggestions</button>
-                        <div class="text-green-600 text-xs mt-1 success" id="suggestions-success-${engine}"></div>
-                    </div>
-                `;
-                
-                body.appendChild(actions);
-                body.appendChild(textDiv);
-                body.appendChild(commentsSection);
-                body.appendChild(feedbackSection);
-                content.appendChild(body);
-                accordionItem.appendChild(header);
-                accordionItem.appendChild(content);
-                accordion.appendChild(accordionItem);
-                
-                // Setup review tracking for this engine
-                setupReviewTracking(engine);
-            });
-            
-            setupTextSelection(); 
-            setupAccordionListeners(); 
-        }
+function showError(message) {
+const el = document.getElementById('error');
+el.querySelector('span').textContent = message;
+el.classList.remove('hidden');
+setTimeout(() => el.classList.add('hidden'), 5000);
+}
 
-        function renderCriteria(engine, type, label) {
-            return `
-                <div class="translation-feedback-item bg-white rounded-lg p-3 border border-slate-200">
-                    <h6 class="text-xs font-semibold text-slate-700 mb-3">${label}</h6>
-                    <div class="flex gap-4">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="${type}-${engine}" value="none" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" id="${type}-none-${engine}">
-                            <span class="text-sm text-slate-700">None</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="${type}-${engine}" value="few" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" id="${type}-few-${engine}">
-                            <span class="text-sm text-slate-700">Few</span>
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="radio" name="${type}-${engine}" value="many" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" id="${type}-many-${engine}">
-                            <span class="text-sm text-slate-700">Many</span>
-                        </label>
-                    </div>
-                </div>
-            `;
-        }
+function hideError() {
+document.getElementById('error').classList.add('hidden');
+}
 
-        function toggleAccordion(engine) {
-            const content = document.getElementById(`content-${engine}`);
-            const icon = document.getElementById(`icon-${engine}`);
-            const header = document.getElementById(`header-${engine}`);
-            
-            if (content.classList.contains('hidden')) {
-                // Close others
-                document.querySelectorAll('.translation-accordion-content').forEach(c => c.classList.add('hidden'));
-                document.querySelectorAll('[id^=icon-]').forEach(i => i.style.transform = 'rotate(0deg)');
-                
-                content.classList.remove('hidden');
-                content.classList.add('fade-in');
-                header.classList.add('bg-slate-100');
-                icon.style.transform = 'rotate(180deg)';
-            } else {
-                content.classList.add('hidden');
-                content.classList.remove('fade-in');
-                header.classList.remove('bg-slate-100');
-                icon.style.transform = 'rotate(0deg)';
-            }
-        }
+function showSuccess(message) {
+const el = document.getElementById('success');
+el.querySelector('span').textContent = message;
+el.classList.remove('hidden');
+setTimeout(() => el.classList.add('hidden'), 3000);
+}
 
-        // --- 3. Polling & Updates (Restored) ---
-        let pollIntervalId = null;
-        function pollTranslationStatus(translationId) {
-            if (pollIntervalId) clearInterval(pollIntervalId);
-            
-            pollIntervalId = setInterval(async () => {
-                try {
-                    const response = await fetch(`/translate-status/${translationId}`);
-                    if (!response.ok) return;
-                    
-                    const data = await response.json();
-                    if (!data.success) return;
-                    
-                    for (const [engine, translation] of Object.entries(data.translations || {})) {
-                        const engineStatus = translation.status || data.status[engine] || 'pending';
-                        updateTranslationPanel(engine, translation, engineStatus);
-                    }
-                    
-                    if (data.all_complete) {
-                        clearInterval(pollIntervalId);
-                        pollIntervalId = null;
-                        loadComments();
-                        showSuccess('All translations completed!');
-                    }
-                } catch (err) { console.error('Polling error', err); }
-            }, 2000);
-        }
+function hideSuccess() {
+document.getElementById('success').classList.add('hidden');
+}
 
-        // Track review status for each engine
-        const reviewStatus = {}; // { engine: 'completed' | 'in_progress' | 'submitted' }
+// --- 2. Core Logic (Restored) ---
 
-        async function checkFeedbackStatus(engine) {
-            if (!currentTranslationId || !currentUserId) return null;
-            try {
-                // Check if feedback exists for this translation and engine
-                const response = await fetch(`/feedback?translation_id=${currentTranslationId}&engine=${engine}&user_id=${currentUserId}`);
-                if (response.ok) {
-                    const data = await response.json();
-                    // If feedback exists with criteria_ratings, it's submitted
-                    if (data.has_review && data.feedback && data.feedback.criteria_ratings) {
-                        return 'submitted';
-                    }
-                }
-            } catch (e) {
-                console.error('Error checking feedback status:', e);
-            }
-            return null;
-        }
+const uploadArea = document.getElementById('uploadArea');
+let fileInput = document.getElementById('fileInput'); // Use let so we can update reference after reset
+const translateBtn = document.getElementById('translateBtn');
+const loading = document.getElementById('loading');
 
-        function updateReviewStatus(engine, status) {
-            reviewStatus[engine] = status;
-            updateStatusBadge(engine);
-        }
+let currentOriginalText = '';
+let currentTranslationId = '';
+let currentUserId = null;
+let currentUsername = null;
+let currentFileType = 'docx';
+let orderedEnginesList = []; // Store ordered engines list for navigation
 
-        function updateStatusBadge(engine) {
-            const statusBadge = document.getElementById(`status-${engine}`);
-            if (!statusBadge) return;
+// Login
+document.getElementById('loginBtn').addEventListener('click', async () => {
+const username = document.getElementById('username').value.trim();
+const password = document.getElementById('password').value;
 
-            const baseStatus = statusBadge.getAttribute('data-base-status') || 'pending';
-            const reviewState = reviewStatus[engine];
+if (!username || !password) {
+const err = document.getElementById('loginError');
+err.textContent = 'Please enter username and password';
+err.classList.remove('hidden');
+return;
+}
 
-            if (baseStatus === 'completed') {
-                if (reviewState === 'submitted') {
-                    statusBadge.textContent = '✓ Review Submitted';
-                    statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 translation-status-badge review-submitted';
-                } else if (reviewState === 'in_progress') {
-                    statusBadge.textContent = '✓ Review in Progress';
-                    statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 translation-status-badge review-in-progress';
-                } else {
-                    statusBadge.textContent = '✓ Complete';
-                    statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 translation-status-badge completed';
-                }
-            }
-        }
+try {
+const response = await fetch('/login', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({username, password})
+});
 
-        function updateTranslationPanel(engine, translation, status) {
-            const textDiv = document.getElementById(`text-${engine}`);
-            const statusBadge = document.getElementById(`status-${engine}`);
-            if (!textDiv || !statusBadge) return;
-            
-            const downloadBtn = document.querySelector(`.download-translation-btn[data-engine="${engine}"]`);
-            const deleteBtn = document.querySelector(`.delete-translation-btn[data-engine="${engine}"]`);
-            
-            // Store base status
-            statusBadge.setAttribute('data-base-status', status);
-            
-            if (status === 'completed') {
-                textDiv.innerHTML = translation.text || 'Translation completed. Loading content...';
-                if (downloadBtn) downloadBtn.style.display = 'flex';
-                if (deleteBtn) deleteBtn.style.display = 'flex';
-                loadCommentsForTranslation(engine);
-                
-                // Check if feedback has been submitted
-                checkFeedbackStatus(engine).then(feedbackStatus => {
-                    if (feedbackStatus === 'submitted') {
-                        updateReviewStatus(engine, 'submitted');
-                    } else {
-                        // Check if user has started reviewing (any criteria selected)
-                        const hasStartedReview = checkIfReviewStarted(engine);
-                        if (hasStartedReview) {
-                            updateReviewStatus(engine, 'in_progress');
-                        } else {
-                            updateReviewStatus(engine, null);
-                        }
-                    }
-                    updateStatusBadge(engine);
-                });
-            } else if (status === 'error') {
-                textDiv.textContent = translation.error || 'Translation failed';
-                textDiv.style.color = '#ef4444';
-                statusBadge.textContent = '✗ Error';
-                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 translation-status-badge error';
-            } else if (status === 'translating') {
-                statusBadge.textContent = 'Translating...';
-                statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 translation-status-badge translating';
-            }
-        }
+const data = await response.json();
+if (data.success) {
+currentUserId = data.user_id;
+currentUsername = data.username;
+document.getElementById('loginSection').classList.add('hidden');
+document.getElementById('mainContent').style.display = 'flex';
+document.getElementById('loginError').classList.add('hidden');
+loadAvailableEngines();
+} else {
+const err = document.getElementById('loginError');
+err.textContent = data.error || 'Login failed';
+err.classList.remove('hidden');
+}
+} catch (err) {
+const errEl = document.getElementById('loginError');
+errEl.textContent = 'Login error: ' + err.message;
+errEl.classList.remove('hidden');
+}
+});
 
-        function checkIfReviewStarted(engine) {
-            // Check if any criteria radio button is selected
-            const criteriaTypes = [
-                'incomplete_translation', 'wrong_terminology', 'wrong_sentence_structure',
-                'telugu_grammar_errors', 'incorrect_layout_structure', 'wrong_glossary_implementation'
-            ];
-            
-            for (const type of criteriaTypes) {
-                const none = document.getElementById(`${type}-none-${engine}`);
-                const few = document.getElementById(`${type}-few-${engine}`);
-                const many = document.getElementById(`${type}-many-${engine}`);
-                
-                if ((none && none.checked) || (few && few.checked) || (many && many.checked)) {
-                    return true;
-                }
-            }
-            return false;
-        }
+// Translate Another File button
+document.getElementById('translateAnotherBtn').addEventListener('click', () => {
+resetToUploadView();
+});
 
-        // Monitor feedback form interactions to detect review start
-        function setupReviewTracking(engine) {
-            const feedbackSection = document.getElementById(`feedback-${engine}`);
-            if (!feedbackSection) return;
+// Logout
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+try {
+await fetch('/logout', {method: 'POST'});
+currentUserId = null;
+currentUsername = null;
+resetToUploadView();
+document.getElementById('loginSection').classList.remove('hidden');
+document.getElementById('mainContent').style.display = 'none';
+} catch (err) {
+console.error('Logout error:', err);
+}
+});
 
-            // Listen for any radio button changes
-            const radioButtons = feedbackSection.querySelectorAll('input[type="radio"]');
-            radioButtons.forEach(radio => {
-                radio.addEventListener('change', () => {
-                    if (checkIfReviewStarted(engine)) {
-                        updateReviewStatus(engine, 'in_progress');
-                    }
-                });
-            });
-        }
+async function loadAvailableEngines() {
+try {
+const response = await fetch('/engines');
+// Logic preserved but UI specific engine select is removed in new design
+// as we show all engines by default.
+} catch (err) { console.error(err); }
+}
 
-        // --- 4. Rating & Feedback (Criteria-based Evaluation) ---
-        async function submitAllRatings(engine) {
-            if (!currentTranslationId || !currentUserId) return showError('Missing info');
-            
-            // Gather criteria ratings
-            const getRating = (type) => {
-                const none = document.getElementById(`${type}-none-${engine}`);
-                const few = document.getElementById(`${type}-few-${engine}`);
-                const many = document.getElementById(`${type}-many-${engine}`);
-                
-                if (none && none.checked) return 'none';
-                if (few && few.checked) return 'few';
-                if (many && many.checked) return 'many';
-                return null;
-            };
-            
-            const criteriaRatings = {
-                incomplete_translation: getRating('incomplete_translation'),
-                wrong_terminology: getRating('wrong_terminology'),
-                wrong_sentence_structure: getRating('wrong_sentence_structure'),
-                telugu_grammar_errors: getRating('telugu_grammar_errors'),
-                incorrect_layout_structure: getRating('incorrect_layout_structure'),
-                wrong_glossary_implementation: getRating('wrong_glossary_implementation')
-            };
-            
-            // Check if ALL criteria are selected (mandatory)
-            const missingCriteria = [];
-            const criteriaLabels = {
-                incomplete_translation: 'Incomplete Translation',
-                wrong_terminology: 'Wrong Terminology',
-                wrong_sentence_structure: 'Wrong Sentence Structure',
-                telugu_grammar_errors: 'Telugu Grammar Errors',
-                incorrect_layout_structure: 'Incorrect Document Layout Structure',
-                wrong_glossary_implementation: 'Wrong Glossary Implementation'
-            };
-            
-            Object.keys(criteriaRatings).forEach(key => {
-                if (criteriaRatings[key] === null) {
-                    missingCriteria.push(criteriaLabels[key]);
-                }
-            });
-            
-            if (missingCriteria.length > 0) {
-                return showError(`Please evaluate all criteria. Missing: ${missingCriteria.join(', ')}`);
-            }
-            
-            try {
-                await fetch('/feedback', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        translation_id: currentTranslationId,
-                        user_id: currentUserId,
-                        translation_method: engine,
-                        file_type: currentFileType,
-                        criteria_ratings: criteriaRatings
-                    })
-                });
-                showSuccess('Evaluation submitted successfully');
-                // Update status to "Review Submitted"
-                updateReviewStatus(engine, 'submitted');
-            } catch(e) { 
-                showError(e.message); 
-            }
-        }
-        
-        async function submitTranslationSuggestions(engine) {
-            const text = document.getElementById(`suggestions-${engine}`).value;
-            if(!text) return;
-            try {
-                await fetch('/feedback', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        translation_id: currentTranslationId,
-                        user_id: currentUserId,
-                        translation_method: engine,
-                        suggestions: text
-                    })
-                });
-                showSuccess('Suggestion saved');
-                document.getElementById(`suggestions-${engine}`).value = '';
-            } catch(e) { showError(e.message); }
-        }
+// Drag & Drop
+uploadArea.addEventListener('click', () => fileInput.click());
+uploadArea.addEventListener('dragover', (e) => {
+e.preventDefault();
+uploadArea.classList.add('border-indigo-500', 'bg-indigo-50');
+});
+uploadArea.addEventListener('dragleave', () => {
+uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
+});
+uploadArea.addEventListener('drop', (e) => {
+e.preventDefault();
+uploadArea.classList.remove('border-indigo-500', 'bg-indigo-50');
+if (e.dataTransfer.files.length > 0) {
+fileInput.files = e.dataTransfer.files;
+handleFile(e.dataTransfer.files[0]);
+}
+});
 
-        // --- 5. Comments (Restored) ---
-        let selectedText = '', selectedDocType = '', selectedRange = null, currentEngineForComment = null;
-        let comments = [];
+fileInput.addEventListener('change', (e) => {
+if (e.target.files.length > 0) handleFile(e.target.files[0]);
+});
 
-        let selectedThumbsRating = null;
+function handleFile(file) {
+if (!file.name.endsWith('.docx')) {
+showError('Please upload a .docx file');
+return;
+}
+currentFileType = 'docx';
+translateBtn.classList.remove('hidden');
+hideError();
 
-        function setupTextSelection() {
-             document.querySelectorAll('.translation-text-content').forEach(panel => {
-                panel.addEventListener('mouseup', () => {
-                    const sel = window.getSelection();
-                    const text = sel.toString().trim();
-                    if (text.length > 0) {
-                        selectedText = text;
-                        selectedDocType = panel.getAttribute('data-doc-type');
-                        currentEngineForComment = panel.getAttribute('data-engine');
-                        selectedRange = sel.getRangeAt(0);
-                        selectedThumbsRating = null; // Reset thumbs rating
-                        showThumbsPopup(text);
-                    }
-                });
-            });
-        }
+// UI Update for selected file
+uploadArea.innerHTML = `
+<div class="flex flex-col items-center">
+<div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+</div>
+<p class="text-xl font-bold text-slate-800">${file.name}</p>
+<p class="text-slate-500">Ready to translate</p>
+</div>
+`;
+}
 
-        function showThumbsPopup(text) {
-            document.getElementById('thumbsPreview').textContent = `"${text.substring(0, 60)}..."`;
-            document.getElementById('thumbsPopup').classList.remove('hidden');
-        }
+// Translation Logic
+translateBtn.addEventListener('click', async () => {
+if (!fileInput.files.length) return;
 
-        function showCommentPopup(text) {
-            document.getElementById('commentPreview').textContent = `"${text.substring(0, 60)}..."`;
-            document.getElementById('commentPopup').classList.remove('hidden');
-        }
+const formData = new FormData();
+formData.append('file', fileInput.files[0]);
+if (currentUserId) formData.append('user_id', currentUserId);
 
-        document.getElementById('cancelThumbsBtn').onclick = () => {
-            document.getElementById('thumbsPopup').classList.add('hidden');
-            selectedThumbsRating = null;
-        };
+loading.classList.remove('hidden');
+translateBtn.disabled = true;
+translateBtn.textContent = 'Generating...';
+hideError();
+hideSuccess();
 
-        document.getElementById('thumbsUpBtn').onclick = () => {
-            selectedThumbsRating = 'up';
-            document.getElementById('thumbsPopup').classList.add('hidden');
-            showCommentPopup(selectedText);
-        };
+try {
+const response = await fetch('/translate', {
+method: 'POST',
+body: formData
+});
 
-        document.getElementById('thumbsDownBtn').onclick = () => {
-            selectedThumbsRating = 'down';
-            document.getElementById('thumbsPopup').classList.add('hidden');
-            showCommentPopup(selectedText);
-        };
+if (!response.ok) {
+const errorData = await response.json().catch(() => ({ error: 'Translation failed' }));
+throw new Error(errorData.error || `Translation failed: ${response.status}`);
+}
 
-        document.getElementById('cancelCommentBtn').onclick = () => {
-            document.getElementById('commentPopup').classList.add('hidden');
-            selectedThumbsRating = null;
-        };
-        
-        document.getElementById('saveCommentBtn').onclick = async () => {
-            const commentText = document.getElementById('commentText').value;
-            if(!commentText) return showError('Enter comment');
-            
-            try {
-                const response = await fetch('/comments', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        translation_id: currentTranslationId,
-                        doc_type: selectedDocType,
-                        selected_text: selectedText,
-                        comment: commentText,
-                        engine: currentEngineForComment,
-                        thumbs_rating: selectedThumbsRating
-                    })
-                });
-                const data = await response.json();
-                if(data.success) {
-                    document.getElementById('commentPopup').classList.add('hidden');
-                    document.getElementById('commentText').value = '';
-                    selectedThumbsRating = null;
-                    showSuccess('Comment saved');
-                    if (currentEngineForComment) loadCommentsForTranslation(currentEngineForComment);
-                } else {
-                    showError(data.error || 'Failed to save comment');
-                }
-            } catch(e) { 
-                showError(e.message); 
-            }
-        };
+const data = await response.json();
+if (!data || !data.success) throw new Error(data.error || 'Translation failed');
 
-        async function loadCommentsForTranslation(engine) {
-            if (!currentTranslationId) return;
-            try {
-                const res = await fetch(`/comments?translation_id=${currentTranslationId}&engine=${engine}`);
-                const data = await res.json();
-                if (!data.success) return;
-                
-                const list = document.getElementById(`comments-list-${engine}`);
-                if (!list) return;
-                list.innerHTML = '';
-                
-                data.comments.forEach(c => {
-                    const item = document.createElement('div');
-                    item.className = 'bg-white p-3 rounded border border-slate-200 text-sm shadow-sm relative group';
-                    item.innerHTML = `
-                        <p class="font-medium text-slate-800 mb-1">"${c.selected_text.substring(0,40)}..."</p>
-                        <p class="text-slate-600">${c.comment}</p>
-                        <button class="absolute top-2 right-2 text-red-400 hover:text-red-600 hidden group-hover:block" onclick="deleteComment(${c.id}, '${engine}')">×</button>
-                    `;
-                    list.appendChild(item);
-                });
-            } catch(e) { console.error(e); }
-        }
+currentOriginalText = data.original_text || '';
+currentTranslationId = data.translation_id || '';
+const engines = data.engines || ['gemini-3-pro', 'google-standard', 'google-adaptive', 'indictrans2'];
 
-        async function deleteComment(id, engine) {
-            if(!confirm('Delete comment?')) return;
-            try {
-                await fetch(`/comments/${id}`, {method: 'DELETE'});
-                loadCommentsForTranslation(engine);
-            } catch(e) { showError(e.message); }
-        }
+// Update UI
+document.getElementById('originalText').innerHTML = currentOriginalText;
+const fileTypeFeedback = document.getElementById('fileTypeFeedback');
+if (fileTypeFeedback) fileTypeFeedback.classList.remove('hidden');
 
-        function setupAccordionListeners() {
-            document.querySelectorAll('.download-translation-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const engine = e.target.getAttribute('data-engine');
-                    try {
-                        const res = await fetch('/download', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ translation_id: currentTranslationId, engine: engine })
-                        });
-                        const blob = await res.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `translated_${engine}.docx`;
-                        a.click();
-                    } catch(err) { showError('Download failed'); }
-                });
-            });
-            
-             document.querySelectorAll('.delete-translation-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const engine = e.target.getAttribute('data-engine');
-                    if(!confirm('Delete?')) return;
-                    try {
-                        await fetch('/delete-translation', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ translation_id: currentTranslationId, engine: engine })
-                        });
-                        document.getElementById(`accordion-${engine}`).remove();
-                        showSuccess('Deleted');
-                    } catch(err) { showError('Delete failed'); }
-                });
-            });
-        }
-        
-        // Placeholder for global load
-        function loadComments() {}
-        
-        // File Type Feedback Logic
-        document.getElementById('submitFileTypeBtn').addEventListener('click', async () => {
-             const type = document.getElementById('fileType').value;
-             if(!type) return showError('Select type');
-             try {
-                 await fetch('/feedback', {
-                     method: 'POST',
-                     headers: {'Content-Type': 'application/json'},
-                     body: JSON.stringify({
-                         translation_id: currentTranslationId,
-                         user_id: currentUserId,
-                         file_type: type
-                     })
-                 });
-                 document.getElementById('fileTypeSuccess').textContent = 'Saved!';
-                 document.getElementById('fileTypeSuccess').classList.remove('hidden');
-             } catch(e) { console.error(e); }
-        });
+showDashboard();
+initializeTranslationPanels(engines);
+pollTranslationStatus(currentTranslationId);
 
-    </script>
+showSuccess('Translation started!');
+
+} catch (err) {
+console.error('Translation error:', err);
+showError(err.message || 'Translation failed');
+} finally {
+loading.classList.add('hidden');
+translateBtn.disabled = false;
+translateBtn.textContent = 'Generate All Translations';
+}
+});
+
+// HTML Generator for Cards (Tailwind + Preserved IDs)
+function initializeTranslationPanels(engines) {
+const accordion = document.getElementById('translationsAccordion');
+accordion.innerHTML = '';
+
+const engineNames = {
+'gemini-3-pro': 'Engine 1',
+'google-standard': 'Engine 2',
+'google-adaptive': 'Engine 3',
+'indictrans2': 'Engine 4'
+};
+
+const orderedEngines = ['gemini-3-pro', 'google-standard', 'google-adaptive', 'indictrans2'];
+const displayOrder = orderedEngines.filter(e => engines.includes(e));
+
+// Store the ordered engines list globally for navigation
+orderedEnginesList = displayOrder;
+
+displayOrder.forEach((engine, index) => {
+const accordionItem = document.createElement('div');
+accordionItem.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden transition-all duration-200 hover:shadow-md translation-accordion-item';
+accordionItem.setAttribute('data-engine', engine);
+accordionItem.id = `accordion-${engine}`;
+
+// Header
+const header = document.createElement('div');
+header.className = 'p-4 bg-slate-50 cursor-pointer flex justify-between items-center border-b border-slate-100 hover:bg-slate-100 transition-colors translation-accordion-header';
+header.id = `header-${engine}`;
+header.onclick = () => toggleAccordion(engine);
+
+const headerContent = document.createElement('div');
+headerContent.className = 'flex items-center gap-3 w-full';
+headerContent.innerHTML = `
+<div class="flex-1 flex items-center justify-between">
+<h4 class="font-semibold text-slate-800 m-0 flex items-center gap-2">
+${engineNames[engine] || `Translation ${index + 1}`}
+</h4>
+<span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 translation-status-badge translating" id="status-${engine}">Translating...</span>
+</div>
+<svg class="w-5 h-5 text-slate-400 transform transition-transform duration-200" id="icon-${engine}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+`;
+header.appendChild(headerContent);
+
+// Content
+const content = document.createElement('div');
+content.className = 'hidden translation-accordion-content'; // hidden by default
+content.id = `content-${engine}`;
+
+const body = document.createElement('div');
+body.className = 'p-6 translation-accordion-body';
+
+// Actions (Download/Delete)
+const actions = document.createElement('div');
+actions.className = 'flex gap-2 mb-4 justify-end border-b border-slate-100 pb-2 translation-actions';
+actions.innerHTML = `
+<button class="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded shadow-sm transition download-translation-btn download-btn" data-engine="${engine}" style="display: none;">
+Download
+</button>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-700 text-xs font-bold rounded shadow-sm transition delete-translation-btn delete-btn" data-engine="${engine}" style="display: none;">
+Delete
+</button>
+`;
+
+// Text Content
+const textDiv = document.createElement('div');
+textDiv.className = 'translation-text-content prose prose-slate max-w-none text-sm leading-relaxed p-4 bg-slate-50 rounded-lg border border-slate-200 min-h-[150px] mb-6 whitespace-pre-wrap';
+textDiv.setAttribute('data-doc-type', 'translated');
+textDiv.setAttribute('data-engine', engine);
+textDiv.id = `text-${engine}`;
+textDiv.textContent = 'Translating... Please wait.';
+
+// Comments Section
+const commentsSection = document.createElement('div');
+commentsSection.className = 'mt-4 pt-4 border-t border-slate-100 translation-comments-section';
+commentsSection.id = `comments-${engine}`;
+commentsSection.innerHTML = `
+<h5 class="text-xs font-bold text-slate-500 uppercase tracking-wide mb-3">💬 Comments</h5>
+<div class="space-y-2 comments-list" id="comments-list-${engine}"></div>
+`;
+
+// Feedback Grid
+const feedbackSection = document.createElement('div');
+feedbackSection.className = 'mt-6 bg-indigo-50/50 rounded-xl p-5 border border-indigo-100 translation-feedback-section';
+feedbackSection.id = `feedback-${engine}`;
+feedbackSection.innerHTML = `
+<div class="mb-4">
+<h5 class="text-indigo-900 font-bold text-sm mb-2">Translation Evaluation</h5>
+<p class="text-xs text-slate-600 mb-4">Evaluate the translation for the following criteria and rate each as None (0), Few (1–5), or Many (5+):</p>
+</div>
+
+<div class="space-y-4 mb-6">
+${renderCriteria(engine, 'incomplete_translation', '(1) Incomplete Translation', 'leaving English characters/words instead of full Telugu')}
+${renderCriteria(engine, 'wrong_terminology', '(2) Wrong Terminology', 'using casual or non-official terms instead of proper G.O. terminology')}
+${renderCriteria(engine, 'wrong_sentence_structure', '(3) Wrong Sentence Structure', 'Telugu sentence order not matching formal G.O. style')}
+${renderCriteria(engine, 'telugu_grammar_errors', '(4) Telugu Grammar Errors', 'mistakes in spelling, verb forms, suffixes, and formal grammar')}
+${renderCriteria(engine, 'incorrect_layout_structure', '(5) Incorrect Layout Structure', 'original formatting/headings/numbers not preserved')}
+${renderCriteria(engine, 'wrong_glossary_implementation', '(6) Wrong Glossary Implementation', 'not using the required official glossary terms')}
+</div>
+
+<div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+<p class="text-xs font-semibold text-blue-900 mb-1">Rating Scale:</p>
+<ul class="text-xs text-blue-800 space-y-1">
+<li><strong>None (0):</strong> No errors for the selected criteria</li>
+<li><strong>Few (1–5):</strong> Small number of errors for the selected criteria</li>
+<li><strong>Many (5+):</strong> Numerous errors for the selected criteria</li>
+</ul>
+</div>
+
+<button class="w-full bg-indigo-600 text-white font-semibold py-2 rounded-lg text-sm hover:bg-indigo-700 transition mb-4 translation-submit-btn" onclick="submitAllRatings('${engine}')">Submit Evaluation</button>
+
+<div>
+<textarea class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:ring-1 focus:ring-indigo-500 outline-none translation-suggestions-textarea" id="suggestions-${engine}" placeholder="Additional suggestions or comments..."></textarea>
+<button class="mt-2 text-indigo-600 text-sm font-medium hover:text-indigo-800 translation-submit-btn" onclick="submitTranslationSuggestions('${engine}')">Submit Suggestions</button>
+<div class="text-green-600 text-xs mt-1 success" id="suggestions-success-${engine}"></div>
+</div>
+`;
+
+body.appendChild(actions);
+body.appendChild(textDiv);
+body.appendChild(commentsSection);
+body.appendChild(feedbackSection);
+content.appendChild(body);
+accordionItem.appendChild(header);
+accordionItem.appendChild(content);
+accordion.appendChild(accordionItem);
+
+// Setup review tracking for this engine
+setupReviewTracking(engine);
+});
+
+setupTextSelection();
+setupAccordionListeners();
+}
+
+function renderCriteria(engine, type, label, description) {
+return `
+<div class="translation-feedback-item bg-white rounded-lg p-3 border border-slate-200">
+<h6 class="text-xs font-semibold text-slate-700 mb-1">${label}</h6>
+<p class="text-xs text-slate-500 mb-3 italic">— ${description}</p>
+<div class="flex gap-4">
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="radio" name="${type}-${engine}" value="none" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" id="${type}-none-${engine}">
+<span class="text-sm text-slate-700">None (0)</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="radio" name="${type}-${engine}" value="few" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" id="${type}-few-${engine}">
+<span class="text-sm text-slate-700">Few (1–5)</span>
+</label>
+<label class="flex items-center gap-2 cursor-pointer">
+<input type="radio" name="${type}-${engine}" value="many" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500" id="${type}-many-${engine}">
+<span class="text-sm text-slate-700">Many (5+)</span>
+</label>
+</div>
+</div>
+`;
+}
+
+function toggleAccordion(engine) {
+const content = document.getElementById(`content-${engine}`);
+const icon = document.getElementById(`icon-${engine}`);
+const header = document.getElementById(`header-${engine}`);
+
+if (content.classList.contains('hidden')) {
+// Close others
+document.querySelectorAll('.translation-accordion-content').forEach(c => c.classList.add('hidden'));
+document.querySelectorAll('[id^=icon-]').forEach(i => i.style.transform = 'rotate(0deg)');
+
+content.classList.remove('hidden');
+content.classList.add('fade-in');
+header.classList.add('bg-slate-100');
+icon.style.transform = 'rotate(180deg)';
+} else {
+content.classList.add('hidden');
+content.classList.remove('fade-in');
+header.classList.remove('bg-slate-100');
+icon.style.transform = 'rotate(0deg)';
+}
+}
+
+function closeAccordion(engine) {
+const content = document.getElementById(`content-${engine}`);
+const icon = document.getElementById(`icon-${engine}`);
+const header = document.getElementById(`header-${engine}`);
+
+if (content && !content.classList.contains('hidden')) {
+content.classList.add('hidden');
+content.classList.remove('fade-in');
+if (header) header.classList.remove('bg-slate-100');
+if (icon) icon.style.transform = 'rotate(0deg)';
+}
+}
+
+function openAccordion(engine) {
+const content = document.getElementById(`content-${engine}`);
+const icon = document.getElementById(`icon-${engine}`);
+const header = document.getElementById(`header-${engine}`);
+
+if (content) {
+// Close all others first
+document.querySelectorAll('.translation-accordion-content').forEach(c => c.classList.add('hidden'));
+document.querySelectorAll('[id^=icon-]').forEach(i => i.style.transform = 'rotate(0deg)');
+
+// Open this one
+content.classList.remove('hidden');
+content.classList.add('fade-in');
+if (header) header.classList.add('bg-slate-100');
+if (icon) icon.style.transform = 'rotate(180deg)';
+}
+}
+
+// --- 3. Polling & Updates (Restored) ---
+let pollIntervalId = null;
+function pollTranslationStatus(translationId) {
+if (pollIntervalId) clearInterval(pollIntervalId);
+
+pollIntervalId = setInterval(async () => {
+try {
+const response = await fetch(`/translate-status/${translationId}`);
+if (!response.ok) return;
+
+const data = await response.json();
+if (!data.success) return;
+
+for (const [engine, translation] of Object.entries(data.translations || {})) {
+const engineStatus = translation.status || data.status[engine] || 'pending';
+updateTranslationPanel(engine, translation, engineStatus);
+}
+
+if (data.all_complete) {
+clearInterval(pollIntervalId);
+pollIntervalId = null;
+loadComments();
+showSuccess('All translations completed!');
+}
+} catch (err) { console.error('Polling error', err); }
+}, 2000);
+}
+
+// Track review status for each engine
+let reviewStatus = {}; // { engine: 'completed' | 'in_progress' | 'submitted' }
+
+async function checkFeedbackStatus(engine) {
+if (!currentTranslationId || !currentUserId) return null;
+try {
+// Check if feedback exists for this translation and engine
+const response = await fetch(`/feedback?translation_id=${currentTranslationId}&engine=${engine}&user_id=${currentUserId}`);
+if (response.ok) {
+const data = await response.json();
+// If feedback exists with criteria_ratings, it's submitted
+if (data.has_review && data.feedback && data.feedback.criteria_ratings) {
+return 'submitted';
+}
+}
+} catch (e) {
+console.error('Error checking feedback status:', e);
+}
+return null;
+}
+
+function updateReviewStatus(engine, status) {
+reviewStatus[engine] = status;
+updateStatusBadge(engine);
+}
+
+function updateStatusBadge(engine) {
+const statusBadge = document.getElementById(`status-${engine}`);
+if (!statusBadge) return;
+
+const baseStatus = statusBadge.getAttribute('data-base-status') || 'pending';
+const reviewState = reviewStatus[engine];
+
+if (baseStatus === 'completed') {
+if (reviewState === 'submitted') {
+statusBadge.textContent = '✓ Review Submitted';
+statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 translation-status-badge review-submitted';
+} else if (reviewState === 'in_progress') {
+statusBadge.textContent = '✓ Review in Progress';
+statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700 translation-status-badge review-in-progress';
+} else {
+statusBadge.textContent = '✓ Complete';
+statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 translation-status-badge completed';
+}
+}
+}
+
+function updateTranslationPanel(engine, translation, status) {
+const textDiv = document.getElementById(`text-${engine}`);
+const statusBadge = document.getElementById(`status-${engine}`);
+if (!textDiv || !statusBadge) return;
+
+const downloadBtn = document.querySelector(`.download-translation-btn[data-engine="${engine}"]`);
+const deleteBtn = document.querySelector(`.delete-translation-btn[data-engine="${engine}"]`);
+
+// Store base status
+statusBadge.setAttribute('data-base-status', status);
+
+if (status === 'completed') {
+textDiv.innerHTML = translation.text || 'Translation completed. Loading content...';
+if (downloadBtn) downloadBtn.style.display = 'flex';
+if (deleteBtn) deleteBtn.style.display = 'flex';
+loadCommentsForTranslation(engine);
+
+// Check if feedback has been submitted
+checkFeedbackStatus(engine).then(feedbackStatus => {
+if (feedbackStatus === 'submitted') {
+updateReviewStatus(engine, 'submitted');
+} else {
+// Check if user has started reviewing (any criteria selected)
+const hasStartedReview = checkIfReviewStarted(engine);
+if (hasStartedReview) {
+updateReviewStatus(engine, 'in_progress');
+} else {
+updateReviewStatus(engine, null);
+}
+}
+updateStatusBadge(engine);
+});
+} else if (status === 'error') {
+textDiv.textContent = translation.error || 'Translation failed';
+textDiv.style.color = '#ef4444';
+statusBadge.textContent = '✗ Error';
+statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 translation-status-badge error';
+} else if (status === 'translating') {
+statusBadge.textContent = 'Translating...';
+statusBadge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 translation-status-badge translating';
+}
+}
+
+function checkIfReviewStarted(engine) {
+// Check if any criteria radio button is selected
+const criteriaTypes = [
+'incomplete_translation', 'wrong_terminology', 'wrong_sentence_structure',
+'telugu_grammar_errors', 'incorrect_layout_structure', 'wrong_glossary_implementation'
+];
+
+for (const type of criteriaTypes) {
+const none = document.getElementById(`${type}-none-${engine}`);
+const few = document.getElementById(`${type}-few-${engine}`);
+const many = document.getElementById(`${type}-many-${engine}`);
+
+if ((none && none.checked) || (few && few.checked) || (many && many.checked)) {
+return true;
+}
+}
+return false;
+}
+
+// Monitor feedback form interactions to detect review start
+function setupReviewTracking(engine) {
+const feedbackSection = document.getElementById(`feedback-${engine}`);
+if (!feedbackSection) return;
+
+// Listen for any radio button changes
+const radioButtons = feedbackSection.querySelectorAll('input[type="radio"]');
+radioButtons.forEach(radio => {
+radio.addEventListener('change', () => {
+if (checkIfReviewStarted(engine)) {
+updateReviewStatus(engine, 'in_progress');
+}
+});
+});
+}
+
+// --- 4. Rating & Feedback (Criteria-based Evaluation) ---
+async function submitAllRatings(engine) {
+if (!currentTranslationId || !currentUserId) return showError('Missing info');
+
+// Gather criteria ratings
+const getRating = (type) => {
+const none = document.getElementById(`${type}-none-${engine}`);
+const few = document.getElementById(`${type}-few-${engine}`);
+const many = document.getElementById(`${type}-many-${engine}`);
+
+if (none && none.checked) return 'none';
+if (few && few.checked) return 'few';
+if (many && many.checked) return 'many';
+return null;
+};
+
+const criteriaRatings = {
+incomplete_translation: getRating('incomplete_translation'),
+wrong_terminology: getRating('wrong_terminology'),
+wrong_sentence_structure: getRating('wrong_sentence_structure'),
+telugu_grammar_errors: getRating('telugu_grammar_errors'),
+incorrect_layout_structure: getRating('incorrect_layout_structure'),
+wrong_glossary_implementation: getRating('wrong_glossary_implementation')
+};
+
+// Check if ALL criteria are selected (mandatory)
+const missingCriteria = [];
+const criteriaLabels = {
+incomplete_translation: 'Incomplete Translation',
+wrong_terminology: 'Wrong Terminology',
+wrong_sentence_structure: 'Wrong Sentence Structure',
+telugu_grammar_errors: 'Telugu Grammar Errors',
+incorrect_layout_structure: 'Incorrect Document Layout Structure',
+wrong_glossary_implementation: 'Wrong Glossary Implementation'
+};
+
+Object.keys(criteriaRatings).forEach(key => {
+if (criteriaRatings[key] === null) {
+missingCriteria.push(criteriaLabels[key]);
+}
+});
+
+if (missingCriteria.length > 0) {
+return showError(`Please evaluate all criteria. Missing: ${missingCriteria.join(', ')}`);
+}
+
+try {
+await fetch('/feedback', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({
+translation_id: currentTranslationId,
+user_id: currentUserId,
+translation_method: engine,
+file_type: currentFileType,
+criteria_ratings: criteriaRatings
+})
+});
+showSuccess('Evaluation submitted successfully');
+// Update status to "Review Submitted"
+updateReviewStatus(engine, 'submitted');
+
+// Close current accordion and open next one
+closeAccordion(engine);
+
+// Find next engine in the ordered list
+const currentIndex = orderedEnginesList.indexOf(engine);
+if (currentIndex !== -1 && currentIndex < orderedEnginesList.length - 1) {
+const nextEngine = orderedEnginesList[currentIndex + 1];
+// Small delay for smooth transition
+setTimeout(() => {
+openAccordion(nextEngine);
+}, 300);
+}
+} catch(e) {
+showError(e.message);
+}
+}
+
+async function submitTranslationSuggestions(engine) {
+const text = document.getElementById(`suggestions-${engine}`).value;
+if(!text) return;
+try {
+await fetch('/feedback', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({
+translation_id: currentTranslationId,
+user_id: currentUserId,
+translation_method: engine,
+suggestions: text
+})
+});
+showSuccess('Suggestion saved');
+document.getElementById(`suggestions-${engine}`).value = '';
+} catch(e) { showError(e.message); }
+}
+
+// --- 5. Comments (Restored) ---
+let selectedText = '', selectedDocType = '', selectedRange = null, currentEngineForComment = null;
+let comments = [];
+
+let selectedThumbsRating = null;
+
+function setupTextSelection() {
+document.querySelectorAll('.translation-text-content').forEach(panel => {
+panel.addEventListener('mouseup', () => {
+const sel = window.getSelection();
+const text = sel.toString().trim();
+if (text.length > 0) {
+selectedText = text;
+selectedDocType = panel.getAttribute('data-doc-type');
+currentEngineForComment = panel.getAttribute('data-engine');
+selectedRange = sel.getRangeAt(0);
+selectedThumbsRating = null; // Reset thumbs rating
+showThumbsPopup(text);
+}
+});
+});
+}
+
+function showThumbsPopup(text) {
+document.getElementById('thumbsPreview').textContent = `"${text.substring(0, 60)}..."`;
+document.getElementById('thumbsPopup').classList.remove('hidden');
+}
+
+function showCommentPopup(text) {
+document.getElementById('commentPreview').textContent = `"${text.substring(0, 60)}..."`;
+document.getElementById('commentPopup').classList.remove('hidden');
+}
+
+document.getElementById('cancelThumbsBtn').onclick = () => {
+document.getElementById('thumbsPopup').classList.add('hidden');
+selectedThumbsRating = null;
+};
+
+document.getElementById('thumbsUpBtn').onclick = () => {
+selectedThumbsRating = 'up';
+document.getElementById('thumbsPopup').classList.add('hidden');
+showCommentPopup(selectedText);
+};
+
+document.getElementById('thumbsDownBtn').onclick = () => {
+selectedThumbsRating = 'down';
+document.getElementById('thumbsPopup').classList.add('hidden');
+showCommentPopup(selectedText);
+};
+
+document.getElementById('cancelCommentBtn').onclick = () => {
+document.getElementById('commentPopup').classList.add('hidden');
+selectedThumbsRating = null;
+};
+
+document.getElementById('saveCommentBtn').onclick = async () => {
+const commentText = document.getElementById('commentText').value;
+if(!commentText) return showError('Enter comment');
+
+try {
+const response = await fetch('/comments', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({
+translation_id: currentTranslationId,
+doc_type: selectedDocType,
+selected_text: selectedText,
+comment: commentText,
+engine: currentEngineForComment,
+thumbs_rating: selectedThumbsRating
+})
+});
+const data = await response.json();
+if(data.success) {
+document.getElementById('commentPopup').classList.add('hidden');
+document.getElementById('commentText').value = '';
+selectedThumbsRating = null;
+showSuccess('Comment saved');
+if (currentEngineForComment) loadCommentsForTranslation(currentEngineForComment);
+} else {
+showError(data.error || 'Failed to save comment');
+}
+} catch(e) {
+showError(e.message);
+}
+};
+
+async function loadCommentsForTranslation(engine) {
+if (!currentTranslationId) return;
+try {
+const res = await fetch(`/comments?translation_id=${currentTranslationId}&engine=${engine}`);
+const data = await res.json();
+if (!data.success) return;
+
+const list = document.getElementById(`comments-list-${engine}`);
+if (!list) return;
+list.innerHTML = '';
+
+data.comments.forEach(c => {
+const item = document.createElement('div');
+item.className = 'bg-white p-3 rounded border border-slate-200 text-sm shadow-sm relative group';
+item.innerHTML = `
+<p class="font-medium text-slate-800 mb-1">"${c.selected_text.substring(0,40)}..."</p>
+<p class="text-slate-600">${c.comment}</p>
+<button class="absolute top-2 right-2 text-red-400 hover:text-red-600 hidden group-hover:block" onclick="deleteComment(${c.id}, '${engine}')">×</button>
+`;
+list.appendChild(item);
+});
+} catch(e) { console.error(e); }
+}
+
+async function deleteComment(id, engine) {
+if(!confirm('Delete comment?')) return;
+try {
+await fetch(`/comments/${id}`, {method: 'DELETE'});
+loadCommentsForTranslation(engine);
+} catch(e) { showError(e.message); }
+}
+
+function setupAccordionListeners() {
+// Engine name mapping (same as used in UI)
+const engineNames = {
+'gemini-3-pro': 'Engine 1',
+'google-standard': 'Engine 2',
+'google-adaptive': 'Engine 3',
+'indictrans2': 'Engine 4'
+};
+
+document.querySelectorAll('.download-translation-btn').forEach(btn => {
+btn.addEventListener('click', async (e) => {
+e.stopPropagation();
+const engine = e.target.getAttribute('data-engine');
+try {
+const res = await fetch('/download', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({ translation_id: currentTranslationId, engine: engine })
+});
+const blob = await res.blob();
+const url = window.URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+// Use Engine 1, Engine 2, etc. instead of model name
+const engineDisplayName = engineNames[engine] || engine;
+a.download = `translated_${engineDisplayName}.docx`;
+a.click();
+} catch(err) { showError('Download failed'); }
+});
+});
+
+document.querySelectorAll('.delete-translation-btn').forEach(btn => {
+btn.addEventListener('click', async (e) => {
+e.stopPropagation();
+const engine = e.target.getAttribute('data-engine');
+if(!confirm('Delete?')) return;
+try {
+await fetch('/delete-translation', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({ translation_id: currentTranslationId, engine: engine })
+});
+document.getElementById(`accordion-${engine}`).remove();
+showSuccess('Deleted');
+} catch(err) { showError('Delete failed'); }
+});
+});
+}
+
+// Placeholder for global load
+function loadComments() {}
+
+// File Type Feedback Logic
+document.getElementById('submitFileTypeBtn').addEventListener('click', async () => {
+const type = document.getElementById('fileType').value;
+if(!type) return showError('Select type');
+try {
+await fetch('/feedback', {
+method: 'POST',
+headers: {'Content-Type': 'application/json'},
+body: JSON.stringify({
+translation_id: currentTranslationId,
+user_id: currentUserId,
+file_type: type
+})
+});
+document.getElementById('fileTypeSuccess').textContent = 'Saved!';
+document.getElementById('fileTypeSuccess').classList.remove('hidden');
+} catch(e) { console.error(e); }
+});
+
+// --- Translation History Feature (ChatGPT style sidebar) ---
+document.getElementById('historyBtn').addEventListener('click', () => {
+const sidebar = document.getElementById('historySidebar');
+if (sidebar.classList.contains('hidden')) {
+sidebar.classList.remove('hidden');
+loadTranslationHistory();
+} else {
+sidebar.classList.add('hidden');
+}
+});
+
+document.getElementById('closeHistorySidebarBtn').addEventListener('click', () => {
+document.getElementById('historySidebar').classList.add('hidden');
+});
+
+async function loadTranslationHistory() {
+const historyList = document.getElementById('historyList');
+const historyLoading = document.getElementById('historyLoading');
+
+if (!historyList || !historyLoading) {
+console.error('[HISTORY] Required elements not found');
+return;
+}
+
+// Show loading, hide list
+historyList.classList.add('hidden');
+historyList.innerHTML = '';
+historyLoading.classList.remove('hidden');
+
+if (!currentUserId) {
+historyLoading.classList.add('hidden');
+historyList.classList.remove('hidden');
+historyList.innerHTML = `
+<div class="text-center py-8 px-4">
+<p class="text-slate-400 text-sm">Please login to view history</p>
+</div>
+`;
+return;
+}
+
+try {
+console.log('[HISTORY] Fetching history for user:', currentUserId);
+const response = await fetch(`/translation-history?user_id=${currentUserId}`);
+
+if (!response.ok) {
+throw new Error(`HTTP error! status: ${response.status}`);
+}
+
+const data = await response.json();
+console.log('[HISTORY] Response:', data);
+
+// Hide loading, show list
+historyLoading.classList.add('hidden');
+historyList.classList.remove('hidden');
+
+if (!data.success) {
+historyList.innerHTML = `
+<div class="text-center py-8 px-4">
+<p class="text-red-400 text-sm">Error: ${data.error || 'Failed to load'}</p>
+</div>
+`;
+return;
+}
+
+if (!data.history || data.history.length === 0) {
+historyList.innerHTML = `
+<div class="text-center py-8 px-4">
+<p class="text-slate-400 text-sm">No history found</p>
+<p class="text-slate-500 text-xs mt-2">Start translating to see history</p>
+</div>
+`;
+return;
+}
+
+console.log('[HISTORY] Displaying', data.history.length, 'sessions');
+
+// Filter to only show translations with 4 engines
+const filteredHistory = data.history.filter(session => {
+const engines = Object.keys(session.translations || {});
+return engines.length === 4;
+});
+
+console.log('[HISTORY] Filtered to', filteredHistory.length, 'sessions with 4 engines');
+
+// Create sidebar list items (ChatGPT style)
+filteredHistory.forEach((session, index) => {
+const historyItem = createHistorySidebarItem(session, index);
+historyList.appendChild(historyItem);
+});
+} catch (err) {
+console.error('[HISTORY] Error:', err);
+historyLoading.classList.add('hidden');
+historyList.classList.remove('hidden');
+historyList.innerHTML = `
+<div class="text-center py-8 px-4">
+<p class="text-red-400 text-sm">Error: ${err.message}</p>
+</div>
+`;
+}
+}
+
+function createHistorySidebarItem(session, index) {
+const item = document.createElement('div');
+item.className = 'px-3 py-2.5 hover:bg-slate-800 cursor-pointer transition-colors border-b border-slate-800 history-item';
+item.setAttribute('data-translation-id', session.translation_id);
+
+const createdAt = new Date(session.created_at).toLocaleDateString('en-US', {
+month: 'short',
+day: 'numeric',
+//hour: '2-digit',
+//minute: '2-digit'
+});
+
+const engines = Object.keys(session.translations || {});
+const engineCount = engines.length;
+
+item.innerHTML = `
+<div class="flex items-start justify-between gap-2">
+<div class="flex-1 min-w-0">
+<div class="text-white text-sm font-medium truncate">Translation ${index + 1}</div>
+<div class="text-slate-400 text-xs mt-1">${createdAt}</div>
+<div class="text-slate-500 text-xs mt-1">${engineCount} engine${engineCount !== 1 ? 's' : ''}</div>
+</div>
+</div>
+`;
+
+// Click handler to load this translation in main view
+item.addEventListener('click', () => {
+loadHistoryTranslation(session);
+// Close sidebar
+document.getElementById('historySidebar').classList.add('hidden');
+});
+
+return item;
+}
+
+function loadHistoryTranslation(session) {
+// Get the first translation's source text (they're all the same)
+const firstEngine = Object.keys(session.translations)[0];
+const firstTranslation = session.translations[firstEngine];
+const sourceText = firstTranslation.source_text || '';
+
+// Set original text
+currentOriginalText = sourceText;
+currentTranslationId = session.translation_id;
+
+// Update UI
+document.getElementById('originalText').innerHTML = sourceText;
+
+// Get all engines from this session
+const engines = Object.keys(session.translations);
+
+// Initialize translation panels with the engines from history
+initializeTranslationPanels(engines);
+
+// Load translations from history (they're already completed)
+engines.forEach((engine, engineIndex) => {
+const translation = session.translations[engine];
+const feedback = session.feedback[engine] || {};
+console.log(`[HISTORY] Feedback for ${engine}:`, feedback);
+console.log(`[HISTORY] Has criteria_ratings for ${engine}:`, !!feedback.criteria_ratings);
+console.log(`[HISTORY] criteria_ratings value for ${engine}:`, feedback.criteria_ratings);
+
+// Create translation data in the format expected by updateTranslationPanel
+const translationData = {
+text: translation.translated_text || '',
+filename: null,
+error: null,
+status: 'completed'
+};
+
+// Update the panel
+updateTranslationPanel(engine, translationData, 'completed');
+
+// Load feedback if available - restore AFTER panel is updated
+if (feedback.criteria_ratings) {
+// JSONB from Supabase should already be an object, but handle both cases
+let criteriaRatings = feedback.criteria_ratings;
+if (typeof criteriaRatings === 'string') {
+try {
+criteriaRatings = JSON.parse(criteriaRatings);
+} catch (e) {
+console.error('Error parsing criteria_ratings:', e);
+criteriaRatings = {};
+}
+}
+
+console.log(`[HISTORY] Restoring criteria_ratings for ${engine}:`, criteriaRatings);
+
+// Use a function to restore with retry logic
+const restoreRatings = (attempt = 0) => {
+const maxAttempts = 10; // Increased attempts
+let foundCount = 0;
+let notFoundCount = 0;
+
+// First, ensure the accordion is open so radio buttons are accessible
+const content = document.getElementById(`content-${engine}`);
+if (content && content.classList.contains('hidden')) {
+// Open the accordion if it's closed
+toggleAccordion(engine);
+}
+
+// Restore criteria ratings
+Object.entries(criteriaRatings).forEach(([key, value]) => {
+const radioId = `${key}-${value}-${engine}`;
+const radio = document.getElementById(radioId);
+if (radio) {
+radio.checked = true;
+// Trigger change event to ensure UI updates
+radio.dispatchEvent(new Event('change', { bubbles: true }));
+foundCount++;
+console.log(`✓ Restored: ${radioId}`);
+} else {
+notFoundCount++;
+console.warn(`✗ Radio not found: ${radioId}`);
+}
+});
+
+// If some radios weren't found and we haven't exceeded max attempts, retry
+if (notFoundCount > 0 && attempt < maxAttempts) {
+console.log(`[HISTORY] Retry ${attempt + 1}/${maxAttempts} - ${notFoundCount} radios not found yet`);
+setTimeout(() => restoreRatings(attempt + 1), 150 * (attempt + 1));
+} else if (notFoundCount > 0) {
+console.error(`[HISTORY] Failed to restore ${notFoundCount} radio buttons after ${maxAttempts} attempts`);
+} else {
+console.log(`[HISTORY] Successfully restored all ${foundCount} criteria ratings for ${engine}`);
+}
+};
+
+// Stagger restoration for each engine and use longer initial delay
+// This ensures updateTranslationPanel has time to complete
+const initialDelay = 500 + (engineIndex * 150);
+setTimeout(() => restoreRatings(), initialDelay);
+}
+
+if (feedback.suggestions) {
+setTimeout(() => {
+const suggestionsTextarea = document.getElementById(`suggestions-${engine}`);
+if (suggestionsTextarea) {
+suggestionsTextarea.value = feedback.suggestions;
+}
+}, 200);
+}
+
+// Load comments for this engine
+const comments = (session.comments || []).filter(c => c.engine === engine);
+if (comments.length > 0) {
+// Manually populate comments since we have them from history
+const commentsList = document.getElementById(`comments-list-${engine}`);
+if (commentsList) {
+commentsList.innerHTML = '';
+comments.forEach(c => {
+const item = document.createElement('div');
+item.className = 'bg-white p-3 rounded border border-slate-200 text-sm shadow-sm';
+const commentThumbs = c.thumbs_rating ?
+(c.thumbs_rating === 'up' ? '👍' : '👎') : '';
+item.innerHTML = `
+<p class="font-medium text-slate-800 mb-1">"${c.selected_text.substring(0,40)}..." ${commentThumbs}</p>
+<p class="text-slate-600">${c.comment}</p>
+`;
+commentsList.appendChild(item);
+});
+}
+} else {
+// Still try to load from API in case there are new comments
+loadCommentsForTranslation(engine);
+}
+});
+
+// Show the preview section
+showDashboard();
+
+// Mark as review submitted if criteria_ratings exist
+engines.forEach(engine => {
+const feedback = session.feedback[engine] || {};
+if (feedback.criteria_ratings) {
+updateReviewStatus(engine, 'submitted');
+}
+});
+}
+
+// Removed unused function - history now uses sidebar and main view
+function _unused_createHistorySessionCard(session, index) {
+const card = document.createElement('div');
+card.className = 'bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden';
+
+const translationId = session.translation_id || 'Unknown';
+let createdAt = 'Unknown date';
+try {
+if (session.created_at) {
+createdAt = new Date(session.created_at).toLocaleString();
+}
+} catch (e) {
+createdAt = session.created_at || 'Unknown date';
+}
+const engines = Object.keys(session.translations || {});
+
+const engineNames = {
+'gemini-3-pro': 'Engine 1',
+'google-standard': 'Engine 2',
+'google-adaptive': 'Engine 3',
+'indictrans2': 'Engine 4'
+};
+
+let translationsHtml = '';
+engines.forEach(engine => {
+const translation = session.translations[engine];
+const feedback = session.feedback[engine] || {};
+const comments = (session.comments || []).filter(c => c.engine === engine);
+
+// Get source text (use first translation's source as they're all the same)
+const sourceText = translation.source_text || '';
+const translatedText = translation.translated_text || '';
+
+// Format criteria ratings
+let criteriaHtml = '';
+if (feedback.criteria_ratings) {
+const criteriaLabels = {
+'incomplete_translation': 'Incomplete Translation',
+'wrong_terminology': 'Wrong Terminology',
+'wrong_sentence_structure': 'Wrong Sentence Structure',
+'telugu_grammar_errors': 'Telugu Grammar Errors',
+'incorrect_layout_structure': 'Incorrect Document Layout Structure',
+'wrong_glossary_implementation': 'Wrong Glossary Implementation'
+};
+
+criteriaHtml = '<div class="mt-3 space-y-1">';
+Object.entries(feedback.criteria_ratings).forEach(([key, value]) => {
+if (value) {
+const label = criteriaLabels[key] || key;
+const badgeColor = value === 'none' ? 'bg-green-100 text-green-700' :
+value === 'few' ? 'bg-yellow-100 text-yellow-700' :
+'bg-red-100 text-red-700';
+criteriaHtml += `
+<div class="flex items-center gap-2 text-xs">
+<span class="font-medium text-slate-600">${label}:</span>
+<span class="px-2 py-0.5 rounded ${badgeColor} font-semibold capitalize">${value}</span>
+</div>
+`;
+}
+});
+criteriaHtml += '</div>';
+}
+
+// Thumbs rating
+let thumbsHtml = '';
+if (feedback.thumbs_rating) {
+const thumbsIcon = feedback.thumbs_rating === 'up' ? '👍' : '👎';
+const thumbsColor = feedback.thumbs_rating === 'up' ? 'text-green-600' : 'text-red-600';
+thumbsHtml = `<div class="text-sm ${thumbsColor} font-medium">${thumbsIcon} ${feedback.thumbs_rating === 'up' ? 'Good' : 'Needs Improvement'}</div>`;
+}
+
+// Comments
+let commentsHtml = '';
+if (comments.length > 0) {
+commentsHtml = '<div class="mt-3 pt-3 border-t border-slate-200">';
+commentsHtml += '<div class="text-xs font-semibold text-slate-500 mb-2">💬 Comments:</div>';
+comments.forEach(comment => {
+const commentThumbs = comment.thumbs_rating ?
+(comment.thumbs_rating === 'up' ? '👍' : '👎') : '';
+commentsHtml += `
+<div class="bg-slate-50 p-2 rounded mb-2 text-xs">
+<div class="font-medium text-slate-700 mb-1">"${comment.selected_text.substring(0, 50)}${comment.selected_text.length > 50 ? '...' : ''}" ${commentThumbs}</div>
+<div class="text-slate-600">${comment.comment}</div>
+</div>
+`;
+});
+commentsHtml += '</div>';
+}
+
+translationsHtml += `
+<div class="border border-slate-200 rounded-lg p-4 mb-4">
+<div class="flex items-center justify-between mb-3">
+<h4 class="font-semibold text-slate-800">${engineNames[engine] || engine}</h4>
+${thumbsHtml}
+</div>
+${criteriaHtml}
+${feedback.suggestions ? `<div class="mt-3 p-2 bg-blue-50 rounded text-xs text-blue-800"><strong>Suggestions:</strong> ${feedback.suggestions}</div>` : ''}
+${commentsHtml}
+<div class="mt-4 grid grid-cols-2 gap-4">
+<div>
+<div class="text-xs font-semibold text-slate-500 mb-1">Original Text</div>
+<div class="text-sm text-slate-700 bg-slate-50 p-3 rounded max-h-40 overflow-y-auto prose prose-slate max-w-none">${sourceText.substring(0, 1000)}${sourceText.length > 1000 ? '...' : ''}</div>
+</div>
+<div>
+<div class="text-xs font-semibold text-slate-500 mb-1">Translated Text</div>
+<div class="text-sm text-slate-700 bg-indigo-50 p-3 rounded max-h-40 overflow-y-auto prose prose-slate max-w-none">${translatedText.substring(0, 1000)}${translatedText.length > 1000 ? '...' : ''}</div>
+</div>
+</div>
+</div>
+`;
+});
+
+card.innerHTML = `
+<div class="p-6">
+<div class="flex items-center justify-between mb-4">
+<div>
+<h3 class="font-bold text-slate-800">Translation Session #${index + 1}</h3>
+<p class="text-xs text-slate-500 mt-1">${createdAt}</p>
+</div>
+<div class="text-xs text-slate-400 font-mono">${translationId.substring(0, 8)}...</div>
+</div>
+<div class="space-y-4">
+${translationsHtml || '<p class="text-slate-500 text-sm">No translations available</p>'}
+</div>
+</div>
+`;
+
+return card;
+}
+
+</script>
 </body>
 </html>

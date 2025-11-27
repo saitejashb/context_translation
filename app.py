@@ -820,6 +820,127 @@ def get_feedback():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/translation-history', methods=['GET'])
+def get_translation_history():
+    """Get all previous translations for the current user"""
+    try:
+        user_id = session.get('user_id') or request.args.get('user_id')
+        if not user_id:
+            print("[HISTORY] No user_id found in session or request")
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        print(f"[HISTORY] Fetching history for user_id: {user_id}")
+        
+        if HAS_SUPABASE:
+            from supabase_config import get_supabase_client
+            supabase = get_supabase_client()
+            if supabase:
+                # Get all translations for this user, grouped by translation_id
+                print(f"[HISTORY] Querying translation_logs for user_id: {user_id}")
+                translations_response = supabase.table("translation_logs").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+                
+                print(f"[HISTORY] Found {len(translations_response.data)} translation log entries")
+                
+                # Group translations by translation_id
+                translation_sessions = {}
+                translations_without_id = []
+                for trans in translations_response.data:
+                    trans_id = trans.get('translation_id')
+                    # Handle None, empty string, or missing translation_id
+                    if not trans_id or trans_id.strip() == '':
+                        translations_without_id.append(trans.get('id'))
+                        print(f"[HISTORY] Skipping translation without translation_id: id={trans.get('id')}, model={trans.get('translation_model')}")
+                        continue
+                    
+                    trans_id = trans_id.strip()  # Clean whitespace
+                    
+                    if trans_id not in translation_sessions:
+                        translation_sessions[trans_id] = {
+                            'translation_id': trans_id,
+                            'created_at': trans.get('created_at'),
+                            'translations': {},
+                            'feedback': {},
+                            'comments': []
+                        }
+                    
+                    engine = trans.get('translation_model')
+                    translation_sessions[trans_id]['translations'][engine] = {
+                        'source_text': trans.get('source_text', ''),
+                        'translated_text': trans.get('translated_text', ''),
+                        'engine': engine,
+                        'created_at': trans.get('created_at')
+                    }
+                
+                print(f"[HISTORY] Grouped into {len(translation_sessions)} translation sessions")
+                if translations_without_id:
+                    print(f"[HISTORY] Warning: {len(translations_without_id)} translations were skipped due to missing translation_id")
+                
+                # Get feedback for each translation_id
+                for trans_id in translation_sessions.keys():
+                    try:
+                        feedback_response = supabase.table("feedback").select("*").eq("translation_id", trans_id).eq("user_id", user_id).order("created_at", desc=True).execute()
+                        print(f"[HISTORY] Found {len(feedback_response.data)} feedback entries for translation_id: {trans_id}")
+                        
+                        # Use a dict to track the most recent feedback per engine
+                        engine_feedback_map = {}
+                        for feedback in feedback_response.data:
+                            # Prioritize translation_method as it has the correct engine name
+                            engine = feedback.get('translation_method') or feedback.get('translation_model')
+                            print(f"[HISTORY] Processing feedback entry - translation_model: {feedback.get('translation_model')}, translation_method: {feedback.get('translation_method')}, engine: {engine}, has_criteria_ratings: {bool(feedback.get('criteria_ratings'))}")
+                            if engine:
+                                # Only keep the first (most recent) feedback for each engine
+                                # Since we order by created_at desc, first occurrence is most recent
+                                if engine not in engine_feedback_map:
+                                    engine_feedback_map[engine] = {
+                                        'overall_quality': feedback.get('overall_quality'),
+                                        'structure_preservation': feedback.get('structure_preservation'),
+                                        'preview_features': feedback.get('preview_features'),
+                                        'thumbs_rating': feedback.get('thumbs_rating'),
+                                        'criteria_ratings': feedback.get('criteria_ratings'),
+                                        'suggestions': feedback.get('suggestions'),
+                                        'created_at': feedback.get('created_at')
+                                    }
+                                    print(f"[HISTORY] Added feedback for engine: {engine}")
+                        
+                        print(f"[HISTORY] Collected feedback for {len(engine_feedback_map)} engines: {list(engine_feedback_map.keys())}")
+                        
+                        # Add all collected feedback to the session
+                        for engine, feedback_data in engine_feedback_map.items():
+                            translation_sessions[trans_id]['feedback'][engine] = feedback_data
+                    except Exception as e:
+                        print(f"[HISTORY] Error fetching feedback for {trans_id}: {e}")
+                    
+                    # Get comments for this translation
+                    try:
+                        comments_response = supabase.table("comments").select("*").eq("translation_id", trans_id).order("created_at", desc=True).execute()
+                        translation_sessions[trans_id]['comments'] = comments_response.data if comments_response.data else []
+                    except Exception as e:
+                        print(f"[HISTORY] Error fetching comments for {trans_id}: {e}")
+                        translation_sessions[trans_id]['comments'] = []
+                
+                # Convert to list sorted by date
+                history_list = list(translation_sessions.values())
+                history_list.sort(key=lambda x: x.get('created_at', ''), reverse=True)
+                
+                print(f"[HISTORY] Returning {len(history_list)} history sessions")
+                return jsonify({
+                    'success': True,
+                    'history': history_list
+                })
+            else:
+                print("[HISTORY] Supabase client is None")
+                return jsonify({'success': True, 'history': [], 'message': 'Supabase not configured'})
+        else:
+            print("[HISTORY] HAS_SUPABASE is False")
+            # If Supabase not available, return empty history
+            return jsonify({'success': True, 'history': [], 'message': 'Supabase not available'})
+    
+    except Exception as e:
+        print(f"[HISTORY] Error getting translation history: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/health')
 def health():
     """Health check endpoint"""
