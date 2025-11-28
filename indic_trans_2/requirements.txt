@@ -6,5 +6,6 @@ python-dotenv
 huggingface_hub[hf_xet]
 fastapi
 uvicorn
+requests
 torch --index-url https://download.pytorch.org/whl/nightly/cu130
 torchvision --index-url https://download.pytorch.org/whl/nightly/cu130

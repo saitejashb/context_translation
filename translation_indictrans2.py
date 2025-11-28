@@ -8,8 +8,11 @@ import json
 from glossary import apply_glossary, get_glossary
 
 # IndicTrans2 API configuration
-INDICTRANS2_API_URL = "http://172.18.69.14:8080/translate"
-INDICTRANS2_LANGUAGES_URL = "http://172.18.69.14:8080/languages"
+# Use environment variable if set, otherwise fallback to docker service name
+import os
+INDICTRANS2_BASE_URL = os.getenv("INDICTRANS2_BASE_URL", "http://indictrans2-nginx:80")
+INDICTRANS2_API_URL = f"{INDICTRANS2_BASE_URL}/translate"
+INDICTRANS2_LANGUAGES_URL = f"{INDICTRANS2_BASE_URL}/languages"
 
 # Cache for language mappings
 _language_mappings = None
