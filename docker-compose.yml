@@ -7,19 +7,22 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      # Mount .env file from host (read-only, DO NOT commit this file to git)
       - ./.env:/app/.env:ro
-      # Mount Google service account JSON file from host (read-only)
-      # Update the path below to match your actual JSON filename
-      - ./concise-memory-477512-u4-d4e9392c74c4 (1).json:/app/service-account.json:ro
-      # Optional: Mount uploads directory to persist files between container restarts
+      - ./concise-memory-477512-u4-d4e9392c74c4.json:/app/service-account.json:ro
       - ./uploads:/app/uploads
     environment:
-      # Override service account file path if needed
       - GOOGLE_SERVICE_ACCOUNT_FILE=/app/service-account.json
-      # Flask configuration
       - FLASK_ENV=production
-    restart: unless-stopped
-    # Security: run as non-root user
-    user: "1000:1000"
+    restart: unless-stopped 
 
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ngrok-tunnel
+    restart: unless-stopped
+    depends_on:
+      - context-translation
+    environment:
+      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN}"
+    command: http context-translation:5000
+    ports:
+      - "4040:4040"  # ngrok web inspector UI

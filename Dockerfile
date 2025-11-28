@@ -21,6 +21,8 @@ COPY . .
 
 # Create directories for uploads and temp files
 RUN mkdir -p /app/uploads /app/temp
+RUN mkdir -p /app/flask_session && chmod -R 777 /app/flask_session
+
 
 # Set environment variables (can be overridden at runtime)
 ENV FLASK_APP=app.py

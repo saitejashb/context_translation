@@ -39,7 +39,8 @@ app.config['SECRET_KEY'] = os.getenv("FLASK_SECRET_KEY", "your-secret-key-here-c
 app.config['MAX_CONTENT_LENGTH'] = int(os.getenv("FLASK_MAX_CONTENT_LENGTH", 50 * 1024 * 1024))  # 50MB max file size
 app.config['UPLOAD_FOLDER'] = tempfile.gettempdir()
 if HAS_FLASK_SESSION:
-    app.config['SESSION_TYPE'] = 'filesystem'
+    app.config["SESSION_TYPE"] = "filesystem"
+    app.config["SESSION_FILE_DIR"] = "/tmp/flask_session"
     Session(app)
 
 # Allowed file extensions
