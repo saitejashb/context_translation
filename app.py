@@ -73,20 +73,134 @@ def preload_models():
             try:
                 print(f"Loading {engine}...")
                 translator = UnifiedDOCXTranslator(engine=engine)
-                # Just initialize, don't translate
-                print(f"✓ {engine} ready")
+                # For IndicTrans2, trigger model initialization and verify it's loaded on RTX 5090
+                if engine == 'indictrans2':
+                    import torch
+                    from translation_indictrans2 import get_indictrans2_translator
+                    
+                    print("=" * 60)
+                    print(f"[{engine}] EXTENSIVE GPU AND MODEL VERIFICATION")
+                    print("=" * 60)
+                    
+                    # Step 1: Check CUDA availability
+                    if not torch.cuda.is_available():
+                        raise Exception("CRITICAL: CUDA is not available. RTX 5090 GPU is required but not detected.")
+                    print(f"✓ CUDA is available")
+                    
+                    # Step 2: Verify GPU count
+                    gpu_count = torch.cuda.device_count()
+                    if gpu_count == 0:
+                        raise Exception("CRITICAL: No GPU devices found. RTX 5090 is required.")
+                    print(f"✓ Found {gpu_count} GPU device(s)")
+                    
+                    # Step 3: Verify RTX 5090 specifically
+                    gpu_name = torch.cuda.get_device_name(0)
+                    print(f"✓ GPU Device 0: {gpu_name}")
+                    
+                    if "5090" not in gpu_name.upper() and "RTX 5090" not in gpu_name.upper():
+                        print(f"⚠ WARNING: Expected RTX 5090 but found: {gpu_name}")
+                        print(f"⚠ Continuing anyway, but this may not be the expected GPU")
+                    else:
+                        print(f"✓ Confirmed: RTX 5090 detected")
+                    
+                    # Step 4: Check GPU properties
+                    gpu_props = torch.cuda.get_device_properties(0)
+                    total_memory_gb = gpu_props.total_memory / 1024**3
+                    print(f"✓ GPU Memory: {total_memory_gb:.2f} GB")
+                    print(f"✓ Compute Capability: {gpu_props.major}.{gpu_props.minor}")
+                    
+                    if total_memory_gb < 20:
+                        print(f"⚠ WARNING: GPU memory ({total_memory_gb:.2f} GB) seems low for RTX 5090 (expected ~32GB)")
+                    
+                    # Step 5: Verify CUDA version compatibility
+                    cuda_version = torch.version.cuda
+                    print(f"✓ PyTorch CUDA Version: {cuda_version}")
+                    
+                    # Step 6: Test GPU computation
+                    print(f"✓ Testing GPU computation...")
+                    test_tensor = torch.randn(100, 100).cuda()
+                    result = torch.matmul(test_tensor, test_tensor)
+                    del test_tensor, result
+                    torch.cuda.empty_cache()
+                    print(f"✓ GPU computation test passed")
+                    
+                    # Step 7: Initialize model
+                    print(f"[{engine}] Initializing model on RTX 5090 (this may take a minute)...")
+                    indictrans2_translator = get_indictrans2_translator(model_name="ai4bharat/indictrans2-en-indic-1B")
+                    
+                    # Step 8: Trigger initialization - this will block until model is loaded
+                    indictrans2_translator._initialize()
+                    
+                    # Step 9: Verify model is actually loaded
+                    if not indictrans2_translator._initialized:
+                        raise Exception("CRITICAL: Model initialization completed but _initialized flag is False")
+                    print(f"✓ Model initialization flag verified")
+                    
+                    # Step 10: Verify model is on GPU (not CPU)
+                    if indictrans2_translator.device != "cuda":
+                        raise Exception(f"CRITICAL: GPU is available but model loaded on {indictrans2_translator.device}. Expected 'cuda'.")
+                    print(f"✓ Model device set to: {indictrans2_translator.device}")
+                    
+                    # Step 11: Verify model parameters are actually on GPU
+                    if indictrans2_translator._model is None:
+                        raise Exception("CRITICAL: Model object is None after initialization")
+                    
+                    model_params = list(indictrans2_translator._model.parameters())
+                    if len(model_params) == 0:
+                        raise Exception("CRITICAL: Model has no parameters")
+                    
+                    first_param = model_params[0]
+                    actual_device = str(first_param.device)
+                    print(f"✓ Model parameter device: {actual_device}")
+                    
+                    if "cuda" not in actual_device.lower():
+                        raise Exception(f"CRITICAL: Model parameters are on {actual_device}, expected CUDA device")
+                    print(f"✓ Model parameters confirmed on GPU")
+                    
+                    # Step 12: Verify GPU memory usage increased (model loaded)
+                    torch.cuda.synchronize()
+                    memory_allocated = torch.cuda.memory_allocated(0) / 1024**3
+                    memory_reserved = torch.cuda.memory_reserved(0) / 1024**3
+                    print(f"✓ GPU Memory Allocated: {memory_allocated:.2f} GB")
+                    print(f"✓ GPU Memory Reserved: {memory_reserved:.2f} GB")
+                    
+                    if memory_allocated < 0.1:
+                        raise Exception(f"CRITICAL: GPU memory allocated ({memory_allocated:.2f} GB) is too low. Model may not be loaded.")
+                    
+                    # Step 13: Test translation to verify model works
+                    print(f"✓ Running test translation to verify model functionality...")
+                    test_result = indictrans2_translator.translate("test", src_lang="English", tgt_lang="Telugu")
+                    
+                    if not test_result or test_result == "test":
+                        raise Exception(f"CRITICAL: Test translation failed. Expected translated text, got: {test_result}")
+                    print(f"✓ Test translation successful: '{test_result[:50]}...'")
+                    
+                    # Step 14: Verify GPU was used during inference
+                    memory_after_inference = torch.cuda.memory_allocated(0) / 1024**3
+                    print(f"✓ GPU Memory after inference: {memory_after_inference:.2f} GB")
+                    
+                    print("=" * 60)
+                    print(f"✓ {engine} model FULLY VERIFIED on RTX 5090")
+                    print(f"  - GPU: {gpu_name}")
+                    print(f"  - Device: {actual_device}")
+                    print(f"  - Memory: {memory_allocated:.2f} GB allocated")
+                    print(f"  - Test translation: PASSED")
+                    print("=" * 60)
+                else:
+                    print(f"✓ {engine} ready")
             except Exception as e:
                 print(f"✗ {engine} failed to load: {e}")
+                import traceback
+                traceback.print_exc()
+                # Re-raise the exception to stop server startup
+                raise
     
     print("=" * 60)
     print("Model pre-loading complete!")
     print("=" * 60)
 
-# Pre-load models on import (runs when app starts)
-try:
-    preload_models()
-except Exception as e:
-    print(f"Warning: Error pre-loading models: {e}")
+# Pre-load models will be called before server starts (see __main__ block)
+# Do not preload on import - wait for explicit call before server starts
 
 @app.route('/')
 def index():
@@ -952,6 +1066,28 @@ if __name__ == '__main__':
     print("=" * 60)
     print("DOCX Translation Web Service")
     print("=" * 60)
+    
+    # CRITICAL: Load all models BEFORE starting the server
+    # If model loading fails, the server will not start
+    try:
+        print("Loading translation models (this may take a few minutes)...")
+        preload_models()
+        print("=" * 60)
+        print("All models loaded successfully!")
+        print("=" * 60)
+    except Exception as e:
+        print("=" * 60)
+        print("FATAL ERROR: Failed to load translation models")
+        print("=" * 60)
+        print(f"Error: {e}")
+        import traceback
+        traceback.print_exc()
+        print("=" * 60)
+        print("Server will NOT start. Please fix the model loading issue and try again.")
+        print("=" * 60)
+        exit(1)
+    
+    # Only start server if models loaded successfully
     print("Starting server...")
     print("Access the web interface at: http://localhost:5000")
     print("=" * 60)

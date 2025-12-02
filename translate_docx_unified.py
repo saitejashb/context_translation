@@ -84,7 +84,16 @@ class UnifiedDOCXTranslator:
         print(f"Translating {len(all_texts)} text segments...")
         
         # Translate all texts
-        translations = translate_batch(all_texts, engine=self.engine, glossary=self.glossary)
+        try:
+            print(f"[{self.engine}] Starting batch translation of {len(all_texts)} segments...")
+            translations = translate_batch(all_texts, engine=self.engine, glossary=self.glossary)
+            print(f"[{self.engine}] Batch translation completed: {len(translations)} translations received")
+        except Exception as e:
+            print(f"[{self.engine}] ERROR in batch translation: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            # Re-raise to let the caller handle it
+            raise
         
         # Log translation
         if user_id:

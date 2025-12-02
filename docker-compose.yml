@@ -8,24 +8,10 @@ services:
       - ./.env:/app/.env:ro
       - ./concise-memory-477512-u4-d4e9392c74c4.json:/app/service-account.json:ro
       - ./uploads:/app/uploads
+      - huggingface_cache:/root/.cache/huggingface
     environment:
       - GOOGLE_SERVICE_ACCOUNT_FILE=/app/service-account.json
       - FLASK_ENV=production
-      - INDICTRANS2_BASE_URL=http://indictrans2-nginx:80
-    depends_on:
-      indictrans2-nginx:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - default
-
-  indictrans2-api:
-    build: ./indic_trans_2
-    container_name: indictrans2-api
-    volumes:
-      - ./indic_trans_2:/app
-      - huggingface_cache:/root/.cache/huggingface
-    environment:
       - HF_TOKEN=${HF_TOKEN:-}
     deploy:
       resources:
@@ -34,26 +20,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [ gpu ]
-    restart: unless-stopped
-    networks:
-      - default
-    healthcheck:
-      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8001/languages', timeout=5)"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s  # Give time for model to load (can take 1-2 minutes)
-
-  indictrans2-nginx:
-    image: nginx:latest
-    container_name: indictrans2-nginx
-    ports:
-      - "8080:80"
-    volumes:
-      - ./indic_trans_2/nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      indictrans2-api:
-        condition: service_healthy
     restart: unless-stopped
     networks:
       - default
