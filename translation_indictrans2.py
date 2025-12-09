@@ -68,6 +68,8 @@ def print_supported_languages():
 
 class IndicTrans2Translator:
     """IndicTrans2 Translation Engine (Local Inference)"""
+
+    #Author: github.com/faraz-wq
     
     def __init__(self, model_name="ai4bharat/indictrans2-en-indic-1B", device=None, src_lang="en", target_lang="te"):
         """

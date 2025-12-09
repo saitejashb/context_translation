@@ -413,6 +413,8 @@ def translate_file():
             }
             
             # Start background translation with PARALLEL execution
+            #Author: github.com/faraz-wq
+    
             import threading
             import concurrent.futures
             
